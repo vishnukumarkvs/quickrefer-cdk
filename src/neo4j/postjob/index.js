@@ -12,7 +12,7 @@ exports.handler = async function (event) {
         WITH job, skillsData, expUnitValue, salUnitValue
         FOREACH (skillValue IN skillsData |
             MERGE (skill:Skill {value: skillValue})
-            CREATE (job)-[:REQUIRES]->(skill)
+            CREATE (job)-[:REQUIRES_SKILL]->(skill)
         )
         MERGE (expUnit:Unit {value: expUnitValue, type: "experience"})
         CREATE (job)-[:HAS_UNIT]->(expUnit)

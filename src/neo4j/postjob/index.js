@@ -7,18 +7,36 @@ exports.handler = async function (event) {
   console.log("event data:", data);
 
   const createJobQuery = `
-        WITH $restData AS jobData, $skills AS skillsData, $experienceUnit AS expUnitValue, $salaryUnit AS salUnitValue
-        CREATE (job:Job {jobTitle: jobData.jobTitle, baseExp: jobData.baseExp, highExp: jobData.highExp, baseSalary: jobData.baseSalary, highSalary: jobData.highSalary, date: datetime(jobData.date), description: jobData.description})
-        WITH job, skillsData, expUnitValue, salUnitValue
-        FOREACH (skillValue IN skillsData |
-            MERGE (skill:Skill {value: skillValue})
-            CREATE (job)-[:REQUIRES_SKILL]->(skill)
-        )
-        MERGE (expUnit:Unit {value: expUnitValue, type: "experience"})
-        CREATE (job)-[:HAS_UNIT]->(expUnit)
-        MERGE (salUnit:Unit {value: salUnitValue, type: "salary"})
-        CREATE (job)-[:HAS_UNIT]->(salUnit)
-    `;
+      WITH $restData AS jobData, $skills AS skillsData, $experienceUnit AS expUnitValue, $salaryUnit AS salUnitValue, $locations AS locationsArray
+      CREATE (job:Job {
+          jobTitle: jobData.jobTitle,
+          baseExp: jobData.baseExp,
+          highExp: jobData.highExp,
+          baseSalary: jobData.baseSalary,
+          highSalary: jobData.highSalary,
+          date: datetime(jobData.date),
+          description: jobData.description,
+          created_at: datetime(),
+          updated_at: datetime()
+      })
+      WITH job, skillsData, expUnitValue, salUnitValue, locationsArray
+      FOREACH (skillValue IN skillsData |
+          MERGE (skill:Skill {value: skillValue})
+          MERGE (job)-[:REQUIRES_SKILL]->(skill)
+      )
+      WITH job, expUnitValue, salUnitValue, locationsArray
+      MERGE (expUnit:Unit {value: expUnitValue, type: "experience"})
+      MERGE (job)-[:HAS_UNIT]->(expUnit)
+      WITH job, salUnitValue, locationsArray
+      MERGE (salUnit:Unit {value: salUnitValue, type: "salary"})
+      MERGE (job)-[:HAS_UNIT]->(salUnit)
+      WITH job, locationsArray
+      UNWIND locationsArray as locationEntry
+      MERGE (city:City {name: locationEntry.city})
+      MERGE (country:Country {name: locationEntry.country})
+      MERGE (city)-[:IN_COUNTRY]->(country)
+      MERGE (job)-[:IN_CITY]->(city);
+  `;
 
   const session = driver.session({ database: "neo4j" });
 
@@ -29,6 +47,7 @@ exports.handler = async function (event) {
         skills: data.skills,
         experienceUnit: data.experienceUnit,
         salaryUnit: data.salaryUnit,
+        locations: data.locations,
       })
     );
     console.log(`Write result:`, writeResult);

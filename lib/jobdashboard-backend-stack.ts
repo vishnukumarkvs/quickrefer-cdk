@@ -15,6 +15,8 @@ export class JobdashboardBackendStack extends cdk.Stack {
     const apigws = new ApiGateways(this, "ApiGateways", {
       createNeo4jLambdaForPostJob: myLambdas.neo4jLambdaForPostjob,
       createNeo4jLambdaForTesting: myLambdas.neo4jLambdaForTesting,
+      createNeo4jLambdaForSearchByParameter:
+        myLambdas.neo4jLambdaForSearchByParameter,
     });
   }
 }

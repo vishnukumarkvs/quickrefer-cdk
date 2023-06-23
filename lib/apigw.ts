@@ -10,6 +10,7 @@ import { Construct } from "constructs";
 interface ApiGatewayProps {
   createNeo4jLambdaForPostJob: IFunction;
   createNeo4jLambdaForTesting: IFunction;
+  createNeo4jLambdaForSearchByParameter: IFunction;
 }
 
 export class ApiGateways extends Construct {
@@ -27,6 +28,10 @@ export class ApiGateways extends Construct {
       props.createNeo4jLambdaForPostJob
     );
 
+    const searchByParameterIntegration = new LambdaIntegration(
+      props.createNeo4jLambdaForSearchByParameter
+    );
+
     // Create Lambda Integration for Testing Lambda
     const testingIntegration = new LambdaIntegration(
       props.createNeo4jLambdaForTesting
@@ -41,6 +46,16 @@ export class ApiGateways extends Construct {
       allowHeaders: ["Content-Type"],
     });
 
+    // Create resource for Search By Parameter Lambda
+    const searchByParameterResource =
+      apiGateway.root.addResource("searchByParameter");
+    searchByParameterResource.addMethod("GET", searchByParameterIntegration);
+    searchByParameterResource.addCorsPreflight({
+      allowOrigins: ["*"], // You might want to restrict this in production
+      allowMethods: ["GET", "OPTIONS"],
+      allowHeaders: ["Content-Type"],
+    });
+
     // Create resource for Testing Lambda
     const testingResource = apiGateway.root.addResource("testing");
     testingResource.addMethod("GET", testingIntegration);
@@ -51,7 +66,9 @@ export class ApiGateways extends Construct {
     });
 
     // Deploy API Gateway
-    const deployment = new Deployment(this, "Neo4jApiDeployment", {
+    // Always changes, will appear in cdk diff
+    // This needs to be done after all the resources are created, or else cdk wont catch it and dev stage wont be updated with new lambda integration
+    const deployment = new Deployment(this, `Neo4jApiDeployment${Date.now()}`, {
       api: apiGateway,
     });
 

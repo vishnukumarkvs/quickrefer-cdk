@@ -11,6 +11,7 @@ dotenv.config();
 
 export class MyLambdas extends Construct {
   public readonly neo4jLambdaForPostjob: NodejsFunction;
+  public readonly neo4jLambdaForSearchByParameter: NodejsFunction;
   public readonly neo4jLambdaForTesting: NodejsFunction;
 
   constructor(scope: Construct, id: string) {
@@ -18,6 +19,8 @@ export class MyLambdas extends Construct {
 
     this.neo4jLambdaForPostjob = this.createNeo4jLambdaForPostJob();
     this.neo4jLambdaForTesting = this.createNeo4jLambdaForTesting();
+    this.neo4jLambdaForSearchByParameter =
+      this.createNeo4jLambdaForSearchByParameter();
   }
 
   private createNeo4jLambdaForPostJob(): NodejsFunction {
@@ -38,6 +41,37 @@ export class MyLambdas extends Construct {
       ...nodeJsFunctionProps,
     });
 
+    return neo4jLambda;
+  }
+
+  private createNeo4jLambdaForSearchByParameter(): NodejsFunction {
+    const nodeJsFunctionProps: NodejsFunctionProps = {
+      bundling: {
+        externalModules: ["aws-sdk"],
+      },
+      environment: {
+        URI: process.env.NEO4J_URI as string,
+        USERNAME: process.env.NEO4J_USERNAME as string,
+        PASSWORD: process.env.NEO4J_PASSWORD as string,
+      },
+      runtime: Runtime.NODEJS_18_X,
+    };
+
+    const neo4jLambda = new NodejsFunction(
+      this,
+      "neo4jLambdaForSearchByParameter",
+      {
+        entry: join(
+          __dirname,
+          "..",
+          "src",
+          "neo4j",
+          "searchByParameter",
+          "index.js"
+        ),
+        ...nodeJsFunctionProps,
+      }
+    );
     return neo4jLambda;
   }
 

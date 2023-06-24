@@ -15,13 +15,14 @@ exports.handler = async function (event) {
   MATCH (u:User)-[:POSTED_JOB]->(job)
   WITH job, u, collect(skill.value) as skills, company
   WITH job, u, skills,
-      CASE WHEN coalesce($jobTitle, "") = "" OR job.jobTitle = $jobTitle THEN 1 ELSE 0 END as jobTitleScore,
-      CASE WHEN coalesce($skillValue, "") = "" OR $skillValue IN skills THEN 1 ELSE 0 END as skillScore,
+  CASE WHEN coalesce($jobTitle, "") = "" OR job.jobTitle = $jobTitle THEN 1 ELSE 0 END as jobTitleScore, 
+      CASE WHEN coalesce($skillValue, "") = "" OR $skillValue IN skills THEN 1 ELSE 0 END as skillScore, 
       CASE WHEN coalesce($companyName, "") = "" OR company.name = $companyName THEN 1 ELSE 0 END as companyScore
   WITH job, u, skills, jobTitleScore + skillScore + companyScore as score
   MATCH (job)-[:IN_CITY]->(c:City)
-  WITH job, u, score, COLLECT(DISTINCT c.name) AS eligibleLocations, skills
-  RETURN job, u, eligibleLocations, skills, score
+  MATCH (job)-[:AT_COMPANY]->(cp:Company)
+  WITH job, u, score, COLLECT(DISTINCT c.name) AS eligibleLocations, skills, cp
+  RETURN job, u, eligibleLocations, skills, score, cp.name AS company
   ORDER BY score DESC
   LIMIT 100
 `;

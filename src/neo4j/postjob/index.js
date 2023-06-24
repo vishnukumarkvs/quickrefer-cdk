@@ -8,6 +8,7 @@ exports.handler = async function (event) {
 
   const createJobQuery = `
   CREATE (job:Job {
+    jobId: $jobId,
     jobTitle: $restData.jobTitle,
     baseExp: $restData.baseExp,
     highExp: $restData.highExp,
@@ -55,6 +56,7 @@ exports.handler = async function (event) {
         locations: data.locations,
         company: data.company,
         userid: data.userid,
+        jobId: data.jobId,
       })
     );
     console.log(`Write result:`, writeResult);

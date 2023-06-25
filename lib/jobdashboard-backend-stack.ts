@@ -10,7 +10,7 @@ export class JobdashboardBackendStack extends cdk.Stack {
     super(scope, id, props);
 
     const database = new MyDatabases(this, "Database");
-    const myLambdas = new MyLambdas(this, "MyLambdas");
+    const myLambdas = new MyLambdas(this, "MyLambdas", database);
 
     const apigws = new ApiGateways(this, "ApiGateways", {
       createNeo4jLambdaForPostJob: myLambdas.neo4jLambdaForPostjob,

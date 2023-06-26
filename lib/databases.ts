@@ -18,8 +18,8 @@ export class MyDatabases extends Construct {
   }
 
   private createAuthTable(): ITable {
-    const authTable = new Table(this, `NextAuthTable`, {
-      tableName: "next-auth",
+    const authTable = new Table(this, "JtUsersTable", {
+      tableName: "Users",
       partitionKey: { name: "pk", type: AttributeType.STRING },
       sortKey: { name: "sk", type: AttributeType.STRING },
       timeToLiveAttribute: "expires",
@@ -31,6 +31,13 @@ export class MyDatabases extends Construct {
       indexName: "GSI1",
       partitionKey: { name: "GSI1PK", type: AttributeType.STRING },
       sortKey: { name: "GSI1SK", type: AttributeType.STRING },
+    });
+
+    authTable.addGlobalSecondaryIndex({
+      indexName: "jtusername-index",
+      partitionKey: { name: "jtusername", type: AttributeType.STRING },
+      // uncomment below line if you want to add sort key
+      // sortKey: { name: "someSortKey", type: AttributeType.STRING },
     });
 
     return authTable;

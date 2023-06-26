@@ -9,7 +9,6 @@ import { Construct } from "constructs";
 
 interface ApiGatewayProps {
   createNeo4jLambdaForPostJob: IFunction;
-  createNeo4jLambdaForTesting: IFunction;
   createNeo4jLambdaForSearchByParameter: IFunction;
 }
 
@@ -32,11 +31,6 @@ export class ApiGateways extends Construct {
       props.createNeo4jLambdaForSearchByParameter
     );
 
-    // Create Lambda Integration for Testing Lambda
-    const testingIntegration = new LambdaIntegration(
-      props.createNeo4jLambdaForTesting
-    );
-
     // Create resource for Post Job Lambda
     const postJobResource = apiGateway.root.addResource("postjob");
     postJobResource.addMethod("POST", postJobIntegration);
@@ -51,15 +45,6 @@ export class ApiGateways extends Construct {
       apiGateway.root.addResource("searchByParameter");
     searchByParameterResource.addMethod("GET", searchByParameterIntegration);
     searchByParameterResource.addCorsPreflight({
-      allowOrigins: ["*"], // You might want to restrict this in production
-      allowMethods: ["GET", "OPTIONS"],
-      allowHeaders: ["Content-Type"],
-    });
-
-    // Create resource for Testing Lambda
-    const testingResource = apiGateway.root.addResource("testing");
-    testingResource.addMethod("GET", testingIntegration);
-    testingResource.addCorsPreflight({
       allowOrigins: ["*"], // You might want to restrict this in production
       allowMethods: ["GET", "OPTIONS"],
       allowHeaders: ["Content-Type"],

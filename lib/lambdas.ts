@@ -7,6 +7,7 @@ import { Construct } from "constructs";
 import { join } from "path";
 import * as dotenv from "dotenv";
 import { ITable } from "aws-cdk-lib/aws-dynamodb";
+import { Duration } from "aws-cdk-lib";
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ export class MyLambdas extends Construct {
         PASSWORD: process.env.NEO4J_PASSWORD as string,
       },
       runtime: Runtime.NODEJS_18_X,
+      timeout: Duration.seconds(15),
     };
 
     const neo4jLambda = new NodejsFunction(this, "neo4jLambdaForPostjob", {
@@ -62,6 +64,7 @@ export class MyLambdas extends Construct {
         PASSWORD: process.env.NEO4J_PASSWORD as string,
       },
       runtime: Runtime.NODEJS_18_X,
+      timeout: Duration.seconds(15),
     };
 
     const neo4jLambda = new NodejsFunction(

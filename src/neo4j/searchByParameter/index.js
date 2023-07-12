@@ -13,7 +13,7 @@ exports.handler = async function (event) {
   OPTIONAL MATCH (job)-[:REQUIRES_SKILL]->(skill:Skill)
   OPTIONAL MATCH (job)-[:AT_COMPANY]->(company:Company)
   MATCH (u:User)-[:POSTED_JOB]->(job)
-  WITH job, u, collect(skill.value) as skills, company
+  WITH job, u, collect(skill.name) as skills, company
   WITH job, u, skills,
   CASE WHEN coalesce($jobTitle, "") = "" OR job.jobTitle = $jobTitle THEN 1 ELSE 0 END as jobTitleScore, 
       CASE WHEN coalesce($skillValue, "") = "" OR $skillValue IN skills THEN 1 ELSE 0 END as skillScore, 

@@ -114,3 +114,60 @@ RETURN job, u, eligibleLocations, skills, score, cp.name AS company
 ORDER BY score DESC
 ', {jobTitle: "", skillValue: "python", companyName: ""}) YIELD value RETURN value
 LIMIT 3
+
+Referral
+
+```
+  const getAllReferrersQuery = `
+  MATCH (u:User)
+  WHERE (u)-[:WORKS_AT]->(:Company {name: $company}) AND u.isJobReferrer = true
+  LIMIT 10
+  RETURN collect(u.userId) AS users
+`;
+```
+
+other 2
+
+```
+MATCH (u:User)
+WHERE (u)-[:WORKS_AT]->(:Company {name: $company})
+  AND u.isJobReferrer = true
+RETURN u.userId AS userId
+ORDER BY CASE WHEN u.jobReferralScore > 0 THEN 0 ELSE 1 END, rand()
+LIMIT 5
+
+```
+
+```
+MATCH (u:User)
+WHERE (u)-[:WORKS_AT]->(:Company {name: $company})
+  AND u.isJobReferrer = true
+WITH u
+ORDER BY u.jobReferralScore DESC, rand()
+RETURN collect(u.userId) AS users
+LIMIT 5
+
+```
+
+final
+
+MATCH (u:User)-[:WORKS_AT]->(:Company {name: 'TCS'})
+WHERE u.isJobReferrer = true
+WITH u.userId AS userId, CASE WHEN u.jobReferralScore > 0 THEN 0 ELSE 1 END as orderField
+ORDER BY orderField, rand()
+RETURN collect(userId)[..5] AS userIds
+
+---
+
+Make sure the referrer dont have more than 15 in his bucket
+
+MATCH (u:User)-[:WORKS_AT]->(:Company {name: $company})
+WHERE u.isJobReferrer = true
+WITH u.userId AS userId, CASE WHEN u.jobReferralScore > 0 THEN 0 ELSE 1 END as orderField
+ORDER BY orderField, rand()
+WITH collect(userId)[..5] AS userIds
+UNWIND userIds AS userId
+MATCH (referrer:User {userId: userId}), (targetUser:User {userId: $targetUserId})
+MERGE (referrer)-[:IS_GOING_TO_REFFER]->(targetUser)
+WITH userId
+RETURN collect(userId) AS referredUserIds

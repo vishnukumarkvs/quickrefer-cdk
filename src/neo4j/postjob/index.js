@@ -21,14 +21,14 @@ exports.handler = async function (event) {
   })
   WITH job
   FOREACH (skillValue IN $skills |
-    MERGE (skill:Skill {value: skillValue})
+    MERGE (skill:Skill {name: skillValue})
     MERGE (job)-[:REQUIRES_SKILL]->(skill)
   )
   WITH job
-  MERGE (expUnit:Unit {value: $experienceUnit, type: "experience"})
+  MERGE (expUnit:Unit {name: $experienceUnit, type: "experience"})
   MERGE (job)-[:HAS_UNIT]->(expUnit)
   WITH job
-  MERGE (salUnit:Unit {value: $salaryUnit, type: "salary"})
+  MERGE (salUnit:Unit {name: $salaryUnit, type: "salary"})
   MERGE (job)-[:HAS_UNIT]->(salUnit)
   WITH job
   UNWIND $locations as locationEntry
@@ -39,7 +39,7 @@ exports.handler = async function (event) {
   MERGE (com:Company {name: $company})
   MERGE (job)-[:AT_COMPANY]->(com)
   WITH job
-  MATCH (user:User {id: $userid})
+  MATCH (user:User {userId: $userid})
   CREATE (user)-[:POSTED_JOB]->(job)
   RETURN job;
 `;

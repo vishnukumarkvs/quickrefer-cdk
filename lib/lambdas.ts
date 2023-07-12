@@ -8,6 +8,7 @@ import { join } from "path";
 import * as dotenv from "dotenv";
 import { ITable } from "aws-cdk-lib/aws-dynamodb";
 import { Duration } from "aws-cdk-lib";
+import { Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ interface MyLambdaProps {
 export class MyLambdas extends Construct {
   public readonly neo4jLambdaForPostjob: NodejsFunction;
   public readonly neo4jLambdaForSearchByParameter: NodejsFunction;
+  public readonly neo4jLambdaForReferralSubmit: NodejsFunction;
   public readonly neo4jLambdaForUpdateCompanies: NodejsFunction;
 
   constructor(scope: Construct, id: string, props: MyLambdaProps) {
@@ -29,6 +31,8 @@ export class MyLambdas extends Construct {
     // No API Gateway for this lambda
     this.neo4jLambdaForUpdateCompanies =
       this.createNeo4jLambdaForUpdateCompanies(props.utilsTable);
+    this.neo4jLambdaForReferralSubmit =
+      this.createNeo4jLambdaForReferralSubmit();
   }
 
   private createNeo4jLambdaForPostJob(): NodejsFunction {
@@ -81,6 +85,45 @@ export class MyLambdas extends Construct {
         ),
         ...nodeJsFunctionProps,
       }
+    );
+    return neo4jLambda;
+  }
+
+  private createNeo4jLambdaForReferralSubmit(): NodejsFunction {
+    const nodeJsFunctionProps: NodejsFunctionProps = {
+      bundling: {
+        externalModules: ["aws-sdk"],
+      },
+      environment: {
+        URI: process.env.NEO4J_URI as string,
+        USERNAME: process.env.NEO4J_USERNAME as string,
+        PASSWORD: process.env.NEO4J_PASSWORD as string,
+      },
+      runtime: Runtime.NODEJS_18_X,
+      timeout: Duration.seconds(15),
+    };
+
+    const neo4jLambda = new NodejsFunction(
+      this,
+      "neo4jLambdaForReferralSubmit",
+      {
+        entry: join(
+          __dirname,
+          "..",
+          "src",
+          "neo4j",
+          "referralSubmit",
+          "index.js"
+        ),
+        ...nodeJsFunctionProps,
+      }
+    );
+    neo4jLambda.addToRolePolicy(
+      new PolicyStatement({
+        resources: ["arn:aws:sns:us-east-1:895656015678:Referrals"],
+        actions: ["sns:Publish"],
+        effect: Effect.ALLOW,
+      })
     );
     return neo4jLambda;
   }

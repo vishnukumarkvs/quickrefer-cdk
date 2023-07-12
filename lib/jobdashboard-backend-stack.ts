@@ -16,6 +16,8 @@ export class JobdashboardBackendStack extends cdk.Stack {
       createNeo4jLambdaForPostJob: myLambdas.neo4jLambdaForPostjob,
       createNeo4jLambdaForSearchByParameter:
         myLambdas.neo4jLambdaForSearchByParameter,
+      createNeo4jLambdaForReferralSubmit:
+        myLambdas.neo4jLambdaForReferralSubmit,
     });
   }
 }

@@ -10,6 +10,7 @@ import { Construct } from "constructs";
 interface ApiGatewayProps {
   createNeo4jLambdaForPostJob: IFunction;
   createNeo4jLambdaForSearchByParameter: IFunction;
+  createNeo4jLambdaForReferralSubmit: IFunction;
 }
 
 export class ApiGateways extends Construct {
@@ -31,6 +32,10 @@ export class ApiGateways extends Construct {
       props.createNeo4jLambdaForSearchByParameter
     );
 
+    const referralSubmitIntegration = new LambdaIntegration(
+      props.createNeo4jLambdaForReferralSubmit
+    );
+
     // Create resource for Post Job Lambda
     const postJobResource = apiGateway.root.addResource("postjob");
     postJobResource.addMethod("POST", postJobIntegration);
@@ -47,6 +52,17 @@ export class ApiGateways extends Construct {
     searchByParameterResource.addCorsPreflight({
       allowOrigins: ["*"], // You might want to restrict this in production
       allowMethods: ["GET", "OPTIONS"],
+      allowHeaders: ["Content-Type"],
+    });
+
+    // Create resource for Referral Submit
+    const referralSubmitResource =
+      apiGateway.root.addResource("referralSubmit");
+    referralSubmitResource.addMethod("GET", referralSubmitIntegration);
+    referralSubmitResource.addMethod("POST", referralSubmitIntegration);
+    referralSubmitResource.addCorsPreflight({
+      allowOrigins: ["*"], // You might want to restrict this in production
+      allowMethods: ["GET", "POST", "OPTIONS"],
       allowHeaders: ["Content-Type"],
     });
 

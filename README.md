@@ -171,3 +171,5 @@ MATCH (referrer:User {userId: userId}), (targetUser:User {userId: $targetUserId}
 MERGE (referrer)-[:IS_GOING_TO_REFFER]->(targetUser)
 WITH userId
 RETURN collect(userId) AS referredUserIds
+
+https://awstip.com/how-to-run-puppeteer-on-aws-lambda-using-layers-b1583ebd7120

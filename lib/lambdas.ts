@@ -1,4 +1,4 @@
-import { Runtime } from "aws-cdk-lib/aws-lambda";
+import { LayerVersion, Runtime } from "aws-cdk-lib/aws-lambda";
 import {
   NodejsFunction,
   NodejsFunctionProps,
@@ -172,13 +172,20 @@ export class MyLambdas extends Construct {
   private createWebpageTextExtractorLambda(): NodejsFunction {
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
-        externalModules: ["aws-sdk"],
+        externalModules: ["aws-sdk", "@sparticuz/chromium", "puppeteer-core"],
       },
       runtime: Runtime.NODEJS_18_X,
       timeout: Duration.seconds(15),
+      layers: [
+        LayerVersion.fromLayerVersionArn(
+          this,
+          "puppeteerLayer",
+          "arn:aws:lambda:us-east-1:895656015678:layer:puppeteer3:1"
+        ),
+      ],
     };
 
-    const neo4jLambda = new NodejsFunction(this, "webpageTextExtractor", {
+    const webExtractLambda = new NodejsFunction(this, "webpageTextExtractor", {
       entry: join(
         __dirname,
         "..",
@@ -189,7 +196,8 @@ export class MyLambdas extends Construct {
       ),
       ...nodeJsFunctionProps,
     });
-    return neo4jLambda;
+
+    return webExtractLambda;
   }
   private createOpenaiJobExtractorLambda(): PythonFunction {
     const fn = new PythonFunction(this, "openaiJobExtractorLambda", {

@@ -39,7 +39,10 @@ function_descriptions = [
 ]
 
 def lambda_handler(event, context):
-    user_prompt = event['body']
+    print(event)
+    response_body = event['body']
+    response_data = json.loads(response_body)
+    user_prompt = response_data['result']
     print(user_prompt)
     
     completion = openai.ChatCompletion.create(
@@ -49,8 +52,11 @@ def lambda_handler(event, context):
         functions=function_descriptions,
         function_call="auto",  # specify the function call
     )
+
+    print(completion)
     
     output = completion.choices[0].message['content']
+    print(output)
     
     return {
         'statusCode': 200,

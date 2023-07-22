@@ -9,8 +9,8 @@ exports.handler = async function (event) {
 
   const getAllReferrersQuery = `
   MATCH (u:User)-[:WORKS_AT]->(:Company {name: $company})
-  WHERE u.isJobReferrer = true
-  WITH u.userId AS userId, CASE WHEN u.jobReferralScore > 0 THEN 0 ELSE 1 END as orderField
+  WHERE u.userRole = $userRole
+  WITH u.userId AS userId, CASE WHEN u.ReferralScore > 0 THEN 0 ELSE 1 END as orderField
   ORDER BY orderField, rand()
   WITH collect(userId)[..5] AS userIds
   UNWIND userIds AS userId
@@ -27,6 +27,7 @@ exports.handler = async function (event) {
       tx.run(getAllReferrersQuery, {
         company: data.company,
         targetUserId: data.targetUserId,
+        userRole: "Referrer",
       })
     );
 

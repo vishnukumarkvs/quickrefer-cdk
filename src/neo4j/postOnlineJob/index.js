@@ -29,7 +29,7 @@ exports.handler = async (event) => {
 
     const result = await session.run(
       `
-            CREATE (n:Job {jobPoster: $jobPoster, jobTitle: $jobTitle, jobDescription: $jobDescription, jobLocation: $jobLocation, jobUrl: $url}) 
+            CREATE (n:Job {jobPoster: $jobPoster, jobTitle: $jobTitle, jobDescription: $jobDescription, jobLocation: $jobLocation, jobUrl: $url, postedBy: $postedby}) 
             WITH n
             UNWIND $skills AS skill
             MERGE (s:Skill {name: skill})
@@ -43,6 +43,7 @@ exports.handler = async (event) => {
         jobLocation: jobLocation,
         skills: skills,
         url: jobData["Job Url"],
+        postedby: "External",
       }
     );
 

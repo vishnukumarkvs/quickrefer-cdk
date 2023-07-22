@@ -16,6 +16,7 @@ exports.handler = async function (event) {
     highSalary: $restData.highSalary,
     date: datetime($restData.date),
     description: $restData.description,
+    postedby: $postedby,
     created_at: datetime(),
     updated_at: datetime()
   })
@@ -57,6 +58,7 @@ exports.handler = async function (event) {
         company: data.company,
         userid: data.userid,
         jobId: data.jobId,
+        postedby: data.postedby,
       })
     );
     console.log(`Write result:`, writeResult);

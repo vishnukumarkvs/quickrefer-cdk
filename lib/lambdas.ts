@@ -175,7 +175,8 @@ export class MyLambdas extends Construct {
         externalModules: ["aws-sdk", "@sparticuz/chromium", "puppeteer-core"],
       },
       runtime: Runtime.NODEJS_18_X,
-      timeout: Duration.seconds(15),
+      timeout: Duration.seconds(120),
+      memorySize: 2048,
       layers: [
         LayerVersion.fromLayerVersionArn(
           this,
@@ -203,6 +204,7 @@ export class MyLambdas extends Construct {
     const fn = new PythonFunction(this, "openaiJobExtractorLambda", {
       entry: join(__dirname, "..", "src", "utils", "openaiJobExtractor"),
       runtime: Runtime.PYTHON_3_9,
+      timeout: Duration.seconds(120),
       bundling: {
         assetExcludes: [".venv"],
       },

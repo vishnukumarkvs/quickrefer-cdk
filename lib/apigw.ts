@@ -1,9 +1,12 @@
 import {
+  AwsIntegration,
+  ContentHandling,
   Deployment,
   LambdaIntegration,
   RestApi,
   Stage,
 } from "aws-cdk-lib/aws-apigateway";
+import { IRole } from "aws-cdk-lib/aws-iam";
 import { IFunction } from "aws-cdk-lib/aws-lambda";
 import { Construct } from "constructs";
 
@@ -11,6 +14,7 @@ interface ApiGatewayProps {
   createNeo4jLambdaForPostJob: IFunction;
   createNeo4jLambdaForSearchByParameter: IFunction;
   createNeo4jLambdaForReferralSubmit: IFunction;
+  extjobApiIamRole: IRole;
 }
 
 export class ApiGateways extends Construct {
@@ -66,6 +70,34 @@ export class ApiGateways extends Construct {
       allowHeaders: ["Content-Type"],
     });
 
+    const extjobpostapi = new RestApi(this, "extjobpost", {
+      restApiName: "External JobPost API",
+      deploy: false,
+    });
+
+    extjobpostapi.root.addMethod(
+      "POST",
+      new AwsIntegration({
+        service: "states",
+        action: "StartExecution",
+        integrationHttpMethod: "POST",
+        options: {
+          integrationResponses: [
+            {
+              statusCode: "200",
+              responseTemplates: {
+                "application/json": `{"done": true}`,
+              },
+            },
+          ],
+          credentialsRole: props.extjobApiIamRole,
+        },
+      }),
+      {
+        methodResponses: [{ statusCode: "200" }],
+      }
+    );
+
     // Deploy API Gateway
     // Always changes, will appear in cdk diff
     // This needs to be done after all the resources are created, or else cdk wont catch it and dev stage wont be updated with new lambda integration
@@ -81,5 +113,21 @@ export class ApiGateways extends Construct {
 
     // Associate the stage with the API Gateway
     apiGateway.deploymentStage = stage;
+
+    // Deploy External JobPost API Gateway
+    const extjobpostdeployment = new Deployment(
+      this,
+      `extjobpostDeployment${Date.now()}`,
+      {
+        api: extjobpostapi,
+      }
+    );
+
+    const extjobpoststage = new Stage(this, "extjobpostStage", {
+      deployment: extjobpostdeployment,
+      stageName: "dev",
+    });
+
+    extjobpostapi.deploymentStage = extjobpoststage;
   }
 }

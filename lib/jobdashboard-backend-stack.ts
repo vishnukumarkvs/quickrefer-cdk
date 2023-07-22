@@ -3,6 +3,7 @@ import { Construct } from "constructs";
 import { MyDatabases } from "./databases";
 import { MyLambdas } from "./lambdas";
 import { ApiGateways } from "./apigw";
+import { IamStack } from "./iam";
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class JobdashboardBackendStack extends cdk.Stack {
@@ -12,12 +13,18 @@ export class JobdashboardBackendStack extends cdk.Stack {
     const database = new MyDatabases(this, "Database");
     const myLambdas = new MyLambdas(this, "MyLambdas", database);
 
+    const iamroles = new IamStack(this, "IamStack", {
+      stateMachineArn:
+        "arn:aws:states:us-east-1:895656015678:stateMachine:jtehzt",
+    });
+
     const apigws = new ApiGateways(this, "ApiGateways", {
       createNeo4jLambdaForPostJob: myLambdas.neo4jLambdaForPostjob,
       createNeo4jLambdaForSearchByParameter:
         myLambdas.neo4jLambdaForSearchByParameter,
       createNeo4jLambdaForReferralSubmit:
         myLambdas.neo4jLambdaForReferralSubmit,
+      extjobApiIamRole: iamroles.apiAccessStepfnRole,
     });
   }
 }

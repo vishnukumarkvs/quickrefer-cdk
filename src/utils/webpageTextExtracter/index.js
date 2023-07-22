@@ -15,7 +15,7 @@ exports.handler = async (event, context) => {
   }
 
   let browser = null;
-  let result = null;
+  let extracted_text = null;
 
   try {
     console.log("Setting up browser options.");
@@ -85,8 +85,8 @@ exports.handler = async (event, context) => {
       });
       console.log("Extracted text content:", textContent);
       console.log("Cleaning up extracted text.");
-      result = textContent.replace(/\s+/g, " ").trim();
-      console.log("Cleaned up extracted text:", result);
+      extracted_text = textContent.replace(/\s+/g, " ").trim();
+      console.log("Cleaned up extracted text:", extracted_text);
     } catch (error) {
       console.error("Error extracting text content from page:", error);
       throw error;
@@ -95,7 +95,7 @@ exports.handler = async (event, context) => {
     console.log("Returning result.");
     return {
       statusCode: 200,
-      body: JSON.stringify({ result }),
+      body: JSON.stringify({ extracted_text, url }),
     };
   } catch (error) {
     console.error("Error occurred:", error);

@@ -22,7 +22,7 @@ function_descriptions = [
                 },
                 "job_description": {
                     "type": "string",
-                    "description": "The Job Description",
+                    "description": "The Job Description e.g. As a Software Engineer at Amazon, you will get an opportunity to work on all the phases of product development (Design/Development, Test and Support) across core Systems technologies including Operating Systems, Cloud Software etc.",
                 },
                 "job_location": {
                     "type": "string",
@@ -42,7 +42,8 @@ def lambda_handler(event, context):
     print(event)
     response_body = event['body']
     response_data = json.loads(response_body)
-    user_prompt = response_data['result']
+    user_prompt = response_data['extracted_text']
+    url = response_data['url']
     print(user_prompt)
     
     completion = openai.ChatCompletion.create(
@@ -88,7 +89,8 @@ def lambda_handler(event, context):
     'Job Title': job_title,
     'Job Description': job_description,
     'Job Location': job_location,
-    'Technical Skills': technical_skills
+    'Technical Skills': technical_skills,
+    'Job Url': url,
     }
 
     # Convert the Python dictionary into a JSON string

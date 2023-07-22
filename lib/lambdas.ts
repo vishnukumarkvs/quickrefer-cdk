@@ -7,7 +7,7 @@ import { Construct } from "constructs";
 import { join } from "path";
 import * as dotenv from "dotenv";
 import { ITable } from "aws-cdk-lib/aws-dynamodb";
-import { Duration } from "aws-cdk-lib";
+import { Duration, Tags } from "aws-cdk-lib";
 import { Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { PythonFunction } from "@aws-cdk/aws-lambda-python-alpha";
 
@@ -24,6 +24,7 @@ export class MyLambdas extends Construct {
   public readonly neo4jLambdaForUpdateCompanies: NodejsFunction;
   public readonly webpageTextExtractor: NodejsFunction;
   public readonly openaiJobExtractor: PythonFunction;
+  public readonly postOnlineJob: NodejsFunction;
 
   constructor(scope: Construct, id: string, props: MyLambdaProps) {
     super(scope, id);
@@ -38,6 +39,7 @@ export class MyLambdas extends Construct {
       this.createNeo4jLambdaForReferralSubmit();
     this.webpageTextExtractor = this.createWebpageTextExtractorLambda();
     this.openaiJobExtractor = this.createOpenaiJobExtractorLambda();
+    this.postOnlineJob = this.createPostOnlineJobLambda();
   }
 
   private createNeo4jLambdaForPostJob(): NodejsFunction {
@@ -58,6 +60,9 @@ export class MyLambdas extends Construct {
       entry: join(__dirname, "..", "src", "neo4j", "postjob", "index.js"),
       ...nodeJsFunctionProps,
     });
+
+    Tags.of(neo4jLambda).add("Project", "JT");
+    Tags.of(neo4jLambda).add("Function", "Post Job HR or Referrer");
 
     return neo4jLambda;
   }
@@ -91,6 +96,8 @@ export class MyLambdas extends Construct {
         ...nodeJsFunctionProps,
       }
     );
+    Tags.of(neo4jLambda).add("Project", "JT");
+    Tags.of(neo4jLambda).add("Function", "Search Job By Parameters");
     return neo4jLambda;
   }
 
@@ -130,6 +137,9 @@ export class MyLambdas extends Construct {
         effect: Effect.ALLOW,
       })
     );
+
+    Tags.of(neo4jLambda).add("Project", "JT");
+    Tags.of(neo4jLambda).add("Function", "Referral Submit");
     return neo4jLambda;
   }
 
@@ -166,6 +176,10 @@ export class MyLambdas extends Construct {
     );
 
     utilsTable.grantWriteData(neo4jLambda);
+
+    Tags.of(neo4jLambda).add("Project", "JT");
+    Tags.of(neo4jLambda).add("Function", "UpdateCompanies from neo4j to ddb");
+
     return neo4jLambda;
   }
 
@@ -198,6 +212,9 @@ export class MyLambdas extends Construct {
       ...nodeJsFunctionProps,
     });
 
+    Tags.of(webExtractLambda).add("Project", "JT");
+    Tags.of(webExtractLambda).add("Function", "Puppeteer Text Extractor");
+
     return webExtractLambda;
   }
   private createOpenaiJobExtractorLambda(): PythonFunction {
@@ -214,6 +231,33 @@ export class MyLambdas extends Construct {
       index: "lambda_handler.py",
       handler: "lambda_handler",
     });
+    Tags.of(fn).add("Project", "JT");
+    Tags.of(fn).add("Function", "OpenAI Job Extractor");
     return fn;
+  }
+
+  private createPostOnlineJobLambda(): NodejsFunction {
+    const nodeJsFunctionProps: NodejsFunctionProps = {
+      bundling: {
+        externalModules: ["aws-sdk"],
+      },
+      runtime: Runtime.NODEJS_18_X,
+      timeout: Duration.seconds(10),
+      environment: {
+        URI: process.env.NEO4J_URI as string,
+        USERNAME: process.env.NEO4J_USERNAME as string,
+        PASSWORD: process.env.NEO4J_PASSWORD as string,
+      },
+    };
+
+    const postOnlineJobLambda = new NodejsFunction(this, "postOnlineJob", {
+      entry: join(__dirname, "..", "src", "neo4j", "postOnlineJob", "index.js"),
+      ...nodeJsFunctionProps,
+    });
+
+    Tags.of(postOnlineJobLambda).add("Project", "JT");
+    Tags.of(postOnlineJobLambda).add("Function", "PostOnlineJob");
+
+    return postOnlineJobLambda;
   }
 }

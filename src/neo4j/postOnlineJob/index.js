@@ -1,4 +1,5 @@
 import { driver } from "./neo4jClient.js";
+import { nanoid } from "nanoid";
 
 exports.handler = async (event) => {
   const session = driver.session({ database: "neo4j" });
@@ -29,7 +30,7 @@ exports.handler = async (event) => {
 
     const result = await session.run(
       `
-            CREATE (n:Job {jobPoster: $jobPoster, jobTitle: $jobTitle, jobDescription: $jobDescription, jobLocation: $jobLocation, jobUrl: $url, postedBy: $postedby}) 
+            CREATE (n:Job {jobId: $jobId, jobPoster: $jobPoster, jobTitle: $jobTitle, jobDescription: $jobDescription, jobLocation: $jobLocation, jobUrl: $url, postedBy: $postedby, status: $status}) 
             WITH n
             UNWIND $skills AS skill
             MERGE (s:Skill {name: skill})
@@ -37,6 +38,7 @@ exports.handler = async (event) => {
             RETURN n
             `,
       {
+        jobId: nanoid(10),
         jobPoster: jobData["Job Poster"],
         jobTitle: jobData["Job Title"],
         jobDescription: jobDescription,
@@ -44,6 +46,7 @@ exports.handler = async (event) => {
         skills: skills,
         url: jobData["Job Url"],
         postedby: "External",
+        status: "Live",
       }
     );
 

@@ -5,6 +5,7 @@ import { MyLambdas } from "./lambdas";
 import { ApiGateways } from "./apigw";
 import { IamStack } from "./iam";
 import * as dotenv from "dotenv";
+import { MyBuckets } from "./s3buckets";
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 dotenv.config();
@@ -14,6 +15,7 @@ export class JobdashboardBackendStack extends cdk.Stack {
 
     const database = new MyDatabases(this, "Database");
     const myLambdas = new MyLambdas(this, "MyLambdas", database);
+    const myBuckets = new MyBuckets(this, "MyBuckets");
 
     const iamroles = new IamStack(this, "IamStack", {
       stateMachineArn: process.env.POST_ONLINE_JOB_STATE_MACHINE_ARN as string,
@@ -26,6 +28,8 @@ export class JobdashboardBackendStack extends cdk.Stack {
       createNeo4jLambdaForReferralSubmit:
         myLambdas.neo4jLambdaForReferralSubmit,
       extjobApiIamRole: iamroles.apiAccessStepfnRole,
+      resumesBucket: myBuckets.resumesBucket,
+      resumesUploadLambda: myLambdas.uploadFileToS3,
     });
   }
 }

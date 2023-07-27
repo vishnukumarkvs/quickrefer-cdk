@@ -25,6 +25,7 @@ export class MyLambdas extends Construct {
   public readonly webpageTextExtractor: NodejsFunction;
   public readonly openaiJobExtractor: PythonFunction;
   public readonly postOnlineJob: NodejsFunction;
+  public readonly uploadFileToS3: NodejsFunction;
 
   constructor(scope: Construct, id: string, props: MyLambdaProps) {
     super(scope, id);
@@ -40,6 +41,7 @@ export class MyLambdas extends Construct {
     this.webpageTextExtractor = this.createWebpageTextExtractorLambda();
     this.openaiJobExtractor = this.createOpenaiJobExtractorLambda();
     this.postOnlineJob = this.createPostOnlineJobLambda();
+    this.uploadFileToS3 = this.createUploadResumeLambda();
   }
 
   private createNeo4jLambdaForPostJob(): NodejsFunction {
@@ -259,5 +261,28 @@ export class MyLambdas extends Construct {
     Tags.of(postOnlineJobLambda).add("Function", "PostOnlineJob");
 
     return postOnlineJobLambda;
+  }
+
+  private createUploadResumeLambda(): NodejsFunction {
+    const nodeJsFunctionProps: NodejsFunctionProps = {
+      bundling: {
+        externalModules: ["aws-sdk"],
+      },
+      environment: {
+        BUCKET_NAME: process.env.BUCKET_NAME as string,
+      },
+      runtime: Runtime.NODEJS_18_X,
+      timeout: Duration.seconds(10),
+    };
+
+    const uploadResumeLambda = new NodejsFunction(this, "uploadResume", {
+      entry: join(__dirname, "..", "src", "aws", "fileUpload", "index.js"),
+      ...nodeJsFunctionProps,
+    });
+
+    Tags.of(uploadResumeLambda).add("Project", "JT");
+    Tags.of(uploadResumeLambda).add("Function", "UploadResume");
+
+    return uploadResumeLambda;
   }
 }

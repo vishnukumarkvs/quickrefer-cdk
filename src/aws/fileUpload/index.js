@@ -32,6 +32,8 @@ exports.handler = async (event) => {
     Bucket: bucketName,
     Key: fileName,
     Body: buffer,
+    ContentType: "application/pdf",
+    ContentDisposition: "inline",
   };
 
   try {

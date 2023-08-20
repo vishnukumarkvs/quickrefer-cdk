@@ -16,11 +16,11 @@ exports.handler = async (event) => {
   // console.log("fileExtension", fileExtension);
 
   // validate file extension
-  if (fileExtension !== "pdf" && fileExtension !== "docx") {
+  if (fileExtension !== "pdf") {
     return {
       statusCode: 400,
       body: JSON.stringify({
-        message: "Invalid file type. Only .pdf and .docx are supported.",
+        message: "Invalid file type. Only .pdf is supported.",
       }),
     };
   }

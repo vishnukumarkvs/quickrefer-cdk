@@ -1,5 +1,12 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import s3Client from "./s3Client";
+import {
+  CloudFrontClient,
+  CreateInvalidationCommand,
+} from "@aws-sdk/client-cloudfront";
+
+const cloudFront = new CloudFrontClient(); // adjust the region accordingly
+const distributionId = "EFXXZFXTNKHI6";
 
 exports.handler = async (event) => {
   console.log("event", event);
@@ -36,9 +43,28 @@ exports.handler = async (event) => {
     ContentDisposition: "inline",
   };
 
+  const pathToInvalidate = `/${fileName}`; // Invalidates a specific file. Use "/*" to invalidate everything.
+
+  const invalidationParams = {
+    DistributionId: distributionId,
+    InvalidationBatch: {
+      CallerReference: `${new Date().getTime()}`, // unique string required for each invalidation
+      Paths: {
+        Quantity: 1,
+        Items: [pathToInvalidate],
+      },
+    },
+  };
+
   try {
     const result = await s3Client.send(new PutObjectCommand(uploadParams));
     console.log("Successfully Uploaded", result);
+    try {
+      await cloudFront.send(new CreateInvalidationCommand(invalidationParams));
+      console.log("Cache invalidated for", pathToInvalidate);
+    } catch (error) {
+      console.error("Error invalidating cache:", error);
+    }
     return {
       headers: {
         "Access-Control-Allow-Origin": "*", // You might want to restrict this in production

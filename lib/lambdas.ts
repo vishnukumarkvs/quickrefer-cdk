@@ -10,6 +10,7 @@ import { ITable } from "aws-cdk-lib/aws-dynamodb";
 import { Duration, Tags } from "aws-cdk-lib";
 import { Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { PythonFunction } from "@aws-cdk/aws-lambda-python-alpha";
+import * as iam from "aws-cdk-lib/aws-iam";
 
 dotenv.config();
 
@@ -279,6 +280,15 @@ export class MyLambdas extends Construct {
       entry: join(__dirname, "..", "src", "aws", "fileUpload", "index.js"),
       ...nodeJsFunctionProps,
     });
+
+    // Add permissions to the Lambda function to allow it to create CloudFront invalidations.
+    const cloudFrontInvalidationStatement = new iam.PolicyStatement({
+      actions: ["cloudfront:CreateInvalidation"],
+      resources: ["*"], // Adjust as necessary.
+      effect: iam.Effect.ALLOW,
+    });
+
+    uploadResumeLambda.addToRolePolicy(cloudFrontInvalidationStatement);
 
     Tags.of(uploadResumeLambda).add("Project", "JT");
     Tags.of(uploadResumeLambda).add("Function", "UploadResume");

@@ -15,7 +15,8 @@ import * as iam from "aws-cdk-lib/aws-iam";
 dotenv.config();
 
 interface MyLambdaProps {
-  utilsTable: ITable;
+  qrActiveConnectionsTable: ITable;
+  qrChatMessages: ITable;
 }
 
 export class MyLambdas extends Construct {
@@ -28,21 +29,36 @@ export class MyLambdas extends Construct {
   public readonly postOnlineJob: NodejsFunction;
   public readonly uploadFileToS3: NodejsFunction;
 
+  // chat socket lambdas
+  public readonly chatConnect: NodejsFunction;
+  public readonly chatDisconnect: NodejsFunction;
+  public readonly chatMessage: NodejsFunction;
+
   constructor(scope: Construct, id: string, props: MyLambdaProps) {
     super(scope, id);
 
     this.neo4jLambdaForPostjob = this.createNeo4jLambdaForPostJob();
     this.neo4jLambdaForSearchByParameter =
       this.createNeo4jLambdaForSearchByParameter();
-    // No API Gateway for this lambda
-    this.neo4jLambdaForUpdateCompanies =
-      this.createNeo4jLambdaForUpdateCompanies(props.utilsTable);
+
     this.neo4jLambdaForReferralSubmit =
       this.createNeo4jLambdaForReferralSubmit();
     this.webpageTextExtractor = this.createWebpageTextExtractorLambda();
     this.openaiJobExtractor = this.createOpenaiJobExtractorLambda();
     this.postOnlineJob = this.createPostOnlineJobLambda();
     this.uploadFileToS3 = this.createUploadResumeLambda();
+
+    // Chat lambdas
+    this.chatConnect = this.createChatConnectLambda(
+      props.qrActiveConnectionsTable
+    );
+    this.chatDisconnect = this.createChatDisconnectLambda(
+      props.qrActiveConnectionsTable
+    );
+    this.chatMessage = this.createChatMessageLambda(
+      props.qrActiveConnectionsTable,
+      props.qrChatMessages
+    );
   }
 
   private createNeo4jLambdaForPostJob(): NodejsFunction {
@@ -143,46 +159,6 @@ export class MyLambdas extends Construct {
 
     Tags.of(neo4jLambda).add("Project", "JT");
     Tags.of(neo4jLambda).add("Function", "Referral Submit");
-    return neo4jLambda;
-  }
-
-  // No API Gateway for this lambda
-  private createNeo4jLambdaForUpdateCompanies(
-    utilsTable: ITable
-  ): NodejsFunction {
-    const nodeJsFunctionProps: NodejsFunctionProps = {
-      bundling: {
-        externalModules: ["aws-sdk"],
-      },
-      environment: {
-        URI: process.env.NEO4J_URI as string,
-        USERNAME: process.env.NEO4J_USERNAME as string,
-        PASSWORD: process.env.NEO4J_PASSWORD as string,
-      },
-      runtime: Runtime.NODEJS_18_X,
-    };
-
-    const neo4jLambda = new NodejsFunction(
-      this,
-      "neo4jLambdaForUpdateCompanies",
-      {
-        entry: join(
-          __dirname,
-          "..",
-          "src",
-          "neo4j",
-          "updateCompanies",
-          "index.js"
-        ),
-        ...nodeJsFunctionProps,
-      }
-    );
-
-    utilsTable.grantWriteData(neo4jLambda);
-
-    Tags.of(neo4jLambda).add("Project", "JT");
-    Tags.of(neo4jLambda).add("Function", "UpdateCompanies from neo4j to ddb");
-
     return neo4jLambda;
   }
 
@@ -294,5 +270,80 @@ export class MyLambdas extends Construct {
     Tags.of(uploadResumeLambda).add("Function", "UploadResume");
 
     return uploadResumeLambda;
+  }
+
+  // Chat lambdas
+  private createChatConnectLambda(
+    qrActiveConnectionsTable: ITable
+  ): NodejsFunction {
+    const nodeJsFunctionProps: NodejsFunctionProps = {
+      bundling: {
+        externalModules: ["aws-sdk"],
+      },
+      runtime: Runtime.NODEJS_14_X,
+      timeout: Duration.seconds(10),
+    };
+
+    const chatConnectLambda = new NodejsFunction(this, "chatConnect", {
+      entry: join(__dirname, "..", "src", "chat", "connect", "index.js"),
+      ...nodeJsFunctionProps,
+    });
+
+    Tags.of(chatConnectLambda).add("Project", "JT");
+    Tags.of(chatConnectLambda).add("Function", "chatConnect");
+
+    qrActiveConnectionsTable.grantReadWriteData(chatConnectLambda);
+
+    return chatConnectLambda;
+  }
+
+  private createChatDisconnectLambda(
+    qrActiveConnectionsTable: ITable
+  ): NodejsFunction {
+    const nodeJsFunctionProps: NodejsFunctionProps = {
+      bundling: {
+        externalModules: ["aws-sdk"],
+      },
+      runtime: Runtime.NODEJS_14_X,
+      timeout: Duration.seconds(10),
+    };
+
+    const chatDisconnectLambda = new NodejsFunction(this, "chatDisconnect", {
+      entry: join(__dirname, "..", "src", "chat", "disconnect", "index.js"),
+      ...nodeJsFunctionProps,
+    });
+
+    Tags.of(chatDisconnectLambda).add("Project", "JT");
+    Tags.of(chatDisconnectLambda).add("Function", "chatDisconnect");
+
+    qrActiveConnectionsTable.grantReadWriteData(chatDisconnectLambda);
+
+    return chatDisconnectLambda;
+  }
+
+  private createChatMessageLambda(
+    qrActiveConnectionsTable: ITable,
+    qrChatMessages: ITable
+  ): NodejsFunction {
+    const nodeJsFunctionProps: NodejsFunctionProps = {
+      bundling: {
+        externalModules: ["aws-sdk"],
+      },
+      runtime: Runtime.NODEJS_14_X,
+      timeout: Duration.seconds(10),
+    };
+
+    const chatMessageLambda = new NodejsFunction(this, "chatMessage", {
+      entry: join(__dirname, "..", "src", "chat", "sendMessage", "index.js"),
+      ...nodeJsFunctionProps,
+    });
+
+    Tags.of(chatMessageLambda).add("Project", "JT");
+    Tags.of(chatMessageLambda).add("Function", "chatMessage");
+
+    qrActiveConnectionsTable.grantReadWriteData(chatMessageLambda);
+    qrChatMessages.grantReadWriteData(chatMessageLambda);
+
+    return chatMessageLambda;
   }
 }

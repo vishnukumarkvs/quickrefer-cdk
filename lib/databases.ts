@@ -9,12 +9,14 @@ import { Construct } from "constructs";
 
 export class MyDatabases extends Construct {
   public readonly authTable: ITable;
-  public readonly utilsTable: ITable;
+  public readonly qrActiveConnectionsTable: ITable;
+  public readonly qrChatMessages: ITable;
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
     this.authTable = this.createAuthTable();
-    this.utilsTable = this.createUtilsTable();
+    this.qrActiveConnectionsTable = this.createActiveConnectionsTable();
+    this.qrChatMessages = this.createChatMessagesTable();
   }
 
   private createAuthTable(): ITable {
@@ -43,15 +45,57 @@ export class MyDatabases extends Construct {
     return authTable;
   }
 
-  private createUtilsTable(): ITable {
-    const utilsTable = new Table(this, `UtilsTable`, {
-      tableName: "Utils",
-      partitionKey: { name: "pk", type: AttributeType.STRING },
-      timeToLiveAttribute: "expires",
+  private createActiveConnectionsTable(): ITable {
+    const activeConnectionsTable = new Table(this, "QrActiveConnectionsTable", {
+      tableName: "QrActiveConnections",
+      partitionKey: {
+        name: "userId",
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: "connectionId",
+        type: AttributeType.STRING,
+      },
+      billingMode: BillingMode.PAY_PER_REQUEST, // Use provisioned if you want provisioned throughput
       removalPolicy: RemovalPolicy.DESTROY,
-      billingMode: BillingMode.PAY_PER_REQUEST,
     });
 
-    return utilsTable;
+    activeConnectionsTable.addGlobalSecondaryIndex({
+      indexName: "connectionId-index",
+      partitionKey: {
+        name: "connectionId",
+        type: AttributeType.STRING,
+      },
+    });
+
+    return activeConnectionsTable;
+  }
+
+  private createChatMessagesTable(): ITable {
+    const chatMessagesTable = new Table(this, "QrChatMessagesTable", {
+      tableName: "QrChatMessages",
+      partitionKey: {
+        name: "chatId",
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: "timestamp",
+        type: AttributeType.NUMBER,
+      },
+      billingMode: BillingMode.PAY_PER_REQUEST, // Use provisioned if you want provisioned throughput
+      removalPolicy: RemovalPolicy.DESTROY,
+    });
+    chatMessagesTable.addGlobalSecondaryIndex({
+      indexName: "RecipientIndex",
+      partitionKey: {
+        name: "recipientId",
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: "timestamp",
+        type: AttributeType.NUMBER,
+      },
+    });
+    return chatMessagesTable;
   }
 }

@@ -7,7 +7,7 @@ exports.handler = async (event) => {
 
   // Query the GSI to get the userId for the given connectionId
   const queryParams = {
-    TableName: "QrActiveConnections",
+    TableName: "QrActiveConnections1",
     IndexName: "connectionId-index", // The GSI name
     KeyConditionExpression: "connectionId = :connectionIdVal",
     ExpressionAttributeValues: {
@@ -32,10 +32,10 @@ exports.handler = async (event) => {
 
     // Delete the item using userId and connectionId
     const deleteParams = {
-      TableName: "QrActiveConnections",
+      TableName: "QrActiveConnections1",
       Key: {
         userId: userId, // Note: You're directly accessing the 'S' property here
-        connectionId: { S: connectionId },
+        connectionKey: { S: `CONNECTION#${connectionId}` },
       },
     };
 

@@ -9,9 +9,10 @@ exports.handler = async (event) => {
   console.log(connectionId, userId, chatId);
 
   const params = {
-    TableName: "QrActiveConnections",
+    TableName: "QrActiveConnections1",
     Item: {
       userId: { S: userId },
+      connectionKey: { S: `CONNECTION#${connectionId}` },
       connectionId: { S: connectionId },
       chatId: { S: chatId },
     },

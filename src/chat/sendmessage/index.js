@@ -1,29 +1,29 @@
 import ddbClient from "./ddbClient";
-import { PutItemCommand, GetItemCommand } from "@aws-sdk/client-dynamodb";
+import { PutItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
 
 import {
   ApiGatewayManagementApiClient,
   PostToConnectionCommand,
-} from "@aws-sdk/client-apigatewaymanagementapi"; // ES Modules import
+} from "@aws-sdk/client-apigatewaymanagementapi";
 
 const apiClient = new ApiGatewayManagementApiClient({
-  endpoint: "https://1hsde5qkbk.execute-api.us-east-1.amazonaws.com/prod", // This gets the WebSocket endpoint
+  endpoint: "https://1hsde5qkbk.execute-api.us-east-1.amazonaws.com/prod",
 });
-exports.handler = async (event) => {
-  const timestamp = Date.now();
-  const senderId = event.body.senderId;
-  const receiverId = event.body.receiverId;
-  const chatId = event.body.chatId;
 
-  // First, save the message to the ChatMessages DynamoDB table
+exports.handler = async (event) => {
+  const currentUnixTimestamp = Math.floor(Date.now() / 1000);
+  const body = JSON.parse(event.body);
+
+  const { action, senderId, receiverId, chatId, content } = body;
+
   const messageParams = {
-    TableName: "ChatAll",
+    TableName: "QrChatMessages1",
     Item: {
-      chatId: chatId,
-      timestamp: timestamp,
-      senderId: senderId,
-      content: event.body.content,
-      seen: false, // initially set to false
+      chatId: { S: chatId },
+      timestamp: { N: currentUnixTimestamp.toString() },
+      senderId: { S: senderId },
+      content: { S: content },
+      seen: { BOOL: false },
     },
   };
 
@@ -34,46 +34,46 @@ exports.handler = async (event) => {
     return { statusCode: 500, body: "Failed to save the message." };
   }
 
-  // Check if the recipient is online and on the same chat page
-  const recipientConnectionData = await ddbClient.send(
-    new GetItemCommand({
-      TableName: "ActiveConnections",
-      Key: { userId: receiverId },
-    })
-  );
+  const postDataTemplate = {
+    Data: JSON.stringify({
+      senderId: senderId,
+      content: content,
+      timestamp: currentUnixTimestamp,
+      chatId: chatId,
+    }),
+  };
 
-  // Check if the sender (current user) is still online (in case they navigated away immediately after sending)
-  const senderConnectionData = await ddbClient.send(
-    new GetItemCommand({
-      TableName: "ActiveConnections",
-      Key: { userId: senderId },
-    })
-  );
+  const getActiveConnectionParams = (userId) => ({
+    TableName: "QrActiveConnections1",
+    KeyConditionExpression: "userId = :userIdValue",
+    ExpressionAttributeValues: {
+      ":userIdValue": { S: userId },
+    },
+  });
 
-  // If both users are online and on the same chat page
-  if (
-    recipientConnectionData.Item &&
-    senderConnectionData.Item &&
-    recipientConnectionData.Item.chatId === chatId &&
-    senderConnectionData.Item.chatId === chatId
-  ) {
-    const postData = {
-      Data: JSON.stringify({
-        senderId: senderId,
-        content: event.body.content,
-        timestamp: timestamp,
-        chatId: chatId,
-      }),
-      ConnectionId: recipientConnectionData.Item.connectionId, // Send the message to the recipient
-    };
+  const sendNotification = async (userId) => {
+    const connectionData = await ddbClient.send(
+      new QueryCommand(getActiveConnectionParams(userId))
+    );
 
-    try {
-      await apiClient.send(new PostToConnectionCommand(postData));
-    } catch (error) {
-      console.error("Error sending real-time message:", error);
-      // If there's an error in sending via WebSocket, it may mean the connection no longer exists, so you might consider removing it from the ActiveConnections table
+    if (connectionData.Items && connectionData.Items.length > 0) {
+      const connectionItem = connectionData.Items[0];
+      if (connectionItem.chatId.S === chatId) {
+        const postData = {
+          ...postDataTemplate,
+          ConnectionId: connectionItem.connectionId.S,
+        };
+        try {
+          await apiClient.send(new PostToConnectionCommand(postData));
+        } catch (error) {
+          console.error(`Error sending message to ${userId}:`, error);
+        }
+      }
     }
-  }
+  };
+
+  await sendNotification(senderId);
+  await sendNotification(receiverId);
 
   return { statusCode: 200, body: "Message sent." };
 };

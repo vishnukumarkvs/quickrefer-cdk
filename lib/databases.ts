@@ -47,13 +47,13 @@ export class MyDatabases extends Construct {
 
   private createActiveConnectionsTable(): ITable {
     const activeConnectionsTable = new Table(this, "QrActiveConnectionsTable", {
-      tableName: "QrActiveConnections",
+      tableName: "QrActiveConnections1",
       partitionKey: {
         name: "userId",
         type: AttributeType.STRING,
       },
       sortKey: {
-        name: "connectionId",
+        name: "connectionKey",
         type: AttributeType.STRING,
       },
       billingMode: BillingMode.PAY_PER_REQUEST, // Use provisioned if you want provisioned throughput
@@ -73,7 +73,7 @@ export class MyDatabases extends Construct {
 
   private createChatMessagesTable(): ITable {
     const chatMessagesTable = new Table(this, "QrChatMessagesTable", {
-      tableName: "QrChatMessages",
+      tableName: "QrChatMessages1",
       partitionKey: {
         name: "chatId",
         type: AttributeType.STRING,

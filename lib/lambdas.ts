@@ -33,6 +33,7 @@ export class MyLambdas extends Construct {
   public readonly chatConnect: NodejsFunction;
   public readonly chatDisconnect: NodejsFunction;
   public readonly chatMessage: NodejsFunction;
+  public readonly getChatMessages: NodejsFunction;
 
   constructor(scope: Construct, id: string, props: MyLambdaProps) {
     super(scope, id);
@@ -59,6 +60,7 @@ export class MyLambdas extends Construct {
       props.qrActiveConnectionsTable,
       props.qrChatMessages
     );
+    this.getChatMessages = this.getChatMessagesLambda(props.qrChatMessages);
   }
 
   private createNeo4jLambdaForPostJob(): NodejsFunction {
@@ -80,7 +82,7 @@ export class MyLambdas extends Construct {
       ...nodeJsFunctionProps,
     });
 
-    Tags.of(neo4jLambda).add("Project", "JT");
+    Tags.of(neo4jLambda).add("Project", "QR");
     Tags.of(neo4jLambda).add("Function", "Post Job HR or Referrer");
 
     return neo4jLambda;
@@ -115,7 +117,7 @@ export class MyLambdas extends Construct {
         ...nodeJsFunctionProps,
       }
     );
-    Tags.of(neo4jLambda).add("Project", "JT");
+    Tags.of(neo4jLambda).add("Project", "QR");
     Tags.of(neo4jLambda).add("Function", "Search Job By Parameters");
     return neo4jLambda;
   }
@@ -157,7 +159,7 @@ export class MyLambdas extends Construct {
       })
     );
 
-    Tags.of(neo4jLambda).add("Project", "JT");
+    Tags.of(neo4jLambda).add("Project", "QR");
     Tags.of(neo4jLambda).add("Function", "Referral Submit");
     return neo4jLambda;
   }
@@ -191,7 +193,7 @@ export class MyLambdas extends Construct {
       ...nodeJsFunctionProps,
     });
 
-    Tags.of(webExtractLambda).add("Project", "JT");
+    Tags.of(webExtractLambda).add("Project", "QR");
     Tags.of(webExtractLambda).add("Function", "Puppeteer Text Extractor");
 
     return webExtractLambda;
@@ -210,7 +212,7 @@ export class MyLambdas extends Construct {
       index: "lambda_handler.py",
       handler: "lambda_handler",
     });
-    Tags.of(fn).add("Project", "JT");
+    Tags.of(fn).add("Project", "QR");
     Tags.of(fn).add("Function", "OpenAI Job Extractor");
     return fn;
   }
@@ -234,7 +236,7 @@ export class MyLambdas extends Construct {
       ...nodeJsFunctionProps,
     });
 
-    Tags.of(postOnlineJobLambda).add("Project", "JT");
+    Tags.of(postOnlineJobLambda).add("Project", "QR");
     Tags.of(postOnlineJobLambda).add("Function", "PostOnlineJob");
 
     return postOnlineJobLambda;
@@ -266,7 +268,7 @@ export class MyLambdas extends Construct {
 
     uploadResumeLambda.addToRolePolicy(cloudFrontInvalidationStatement);
 
-    Tags.of(uploadResumeLambda).add("Project", "JT");
+    Tags.of(uploadResumeLambda).add("Project", "QR");
     Tags.of(uploadResumeLambda).add("Function", "UploadResume");
 
     return uploadResumeLambda;
@@ -280,7 +282,7 @@ export class MyLambdas extends Construct {
       bundling: {
         externalModules: ["aws-sdk"],
       },
-      runtime: Runtime.NODEJS_14_X,
+      runtime: Runtime.NODEJS_18_X,
       timeout: Duration.seconds(10),
     };
 
@@ -289,7 +291,7 @@ export class MyLambdas extends Construct {
       ...nodeJsFunctionProps,
     });
 
-    Tags.of(chatConnectLambda).add("Project", "JT");
+    Tags.of(chatConnectLambda).add("Project", "QR");
     Tags.of(chatConnectLambda).add("Function", "chatConnect");
 
     qrActiveConnectionsTable.grantReadWriteData(chatConnectLambda);
@@ -304,7 +306,7 @@ export class MyLambdas extends Construct {
       bundling: {
         externalModules: ["aws-sdk"],
       },
-      runtime: Runtime.NODEJS_14_X,
+      runtime: Runtime.NODEJS_18_X,
       timeout: Duration.seconds(10),
     };
 
@@ -313,7 +315,7 @@ export class MyLambdas extends Construct {
       ...nodeJsFunctionProps,
     });
 
-    Tags.of(chatDisconnectLambda).add("Project", "JT");
+    Tags.of(chatDisconnectLambda).add("Project", "QR");
     Tags.of(chatDisconnectLambda).add("Function", "chatDisconnect");
 
     qrActiveConnectionsTable.grantReadWriteData(chatDisconnectLambda);
@@ -329,21 +331,49 @@ export class MyLambdas extends Construct {
       bundling: {
         externalModules: ["aws-sdk"],
       },
-      runtime: Runtime.NODEJS_14_X,
+      runtime: Runtime.NODEJS_18_X,
       timeout: Duration.seconds(10),
     };
 
     const chatMessageLambda = new NodejsFunction(this, "chatMessage", {
-      entry: join(__dirname, "..", "src", "chat", "sendMessage", "index.js"),
+      entry: join(__dirname, "..", "src", "chat", "sendmessage", "index.js"),
       ...nodeJsFunctionProps,
     });
 
-    Tags.of(chatMessageLambda).add("Project", "JT");
+    Tags.of(chatMessageLambda).add("Project", "QR");
     Tags.of(chatMessageLambda).add("Function", "chatMessage");
 
     qrActiveConnectionsTable.grantReadWriteData(chatMessageLambda);
     qrChatMessages.grantReadWriteData(chatMessageLambda);
 
     return chatMessageLambda;
+  }
+  private getChatMessagesLambda(qrChatMessages: ITable): NodejsFunction {
+    const nodeJsFunctionProps: NodejsFunctionProps = {
+      bundling: {
+        externalModules: ["aws-sdk"],
+      },
+      runtime: Runtime.NODEJS_18_X,
+      timeout: Duration.seconds(10),
+    };
+
+    const getChatMessagesLambda = new NodejsFunction(this, "getChatMessage", {
+      entry: join(
+        __dirname,
+        "..",
+        "src",
+        "chat",
+        "getchatmessages",
+        "index.js"
+      ),
+      ...nodeJsFunctionProps,
+    });
+
+    Tags.of(getChatMessagesLambda).add("Project", "QR");
+    Tags.of(getChatMessagesLambda).add("Function", "getChatMessages");
+
+    qrChatMessages.grantReadWriteData(getChatMessagesLambda);
+
+    return getChatMessagesLambda;
   }
 }

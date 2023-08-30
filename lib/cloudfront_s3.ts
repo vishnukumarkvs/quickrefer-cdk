@@ -1,4 +1,3 @@
-import { Duration } from "aws-cdk-lib";
 import {
   CloudFrontToS3,
   CloudFrontToS3Props,

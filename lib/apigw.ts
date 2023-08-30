@@ -18,6 +18,7 @@ interface ApiGatewayProps {
   extjobApiIamRole: IRole;
   resumesBucket: IBucket;
   resumesUploadLambda: IFunction;
+  getChatMessagesLambda: IFunction;
 }
 
 export class ApiGateways extends Construct {
@@ -120,6 +121,24 @@ export class ApiGateways extends Construct {
       allowHeaders: ["Content-Type", "file-extension"],
     });
 
+    // get chat messages from chatId
+    const chatMessagesApi = new RestApi(this, "chatMessages", {
+      restApiName: "Chat Messages API",
+      deploy: false,
+    });
+
+    const chatMessagesIntegration = new LambdaIntegration(
+      props.getChatMessagesLambda
+    );
+
+    const chatMessagesResource = chatMessagesApi.root.addResource("messages");
+    chatMessagesResource.addMethod("GET", chatMessagesIntegration);
+    chatMessagesResource.addCorsPreflight({
+      allowOrigins: ["*"], // You might want to restrict this in production
+      allowMethods: ["GET", "OPTIONS"],
+      allowHeaders: ["Content-Type"],
+    });
+
     // Deploy API Gateway
     // Always changes, will appear in cdk diff
     // This needs to be done after all the resources are created, or else cdk wont catch it and dev stage wont be updated with new lambda integration
@@ -159,5 +178,19 @@ export class ApiGateways extends Construct {
       stageName: "dev",
     });
     resumeUploadApi.deploymentStage = resumeUploadStage;
+
+    // Deploy Chat Messages Api
+    const chatMessagesDeployment = new Deployment(
+      this,
+      `chatMessagesDeployment${Date.now()}`,
+      {
+        api: chatMessagesApi,
+      }
+    );
+    const chatMessagesStage = new Stage(this, "chatMessagesStage", {
+      deployment: chatMessagesDeployment,
+      stageName: "dev",
+    });
+    chatMessagesApi.deploymentStage = chatMessagesStage;
   }
 }

@@ -40,6 +40,7 @@ export class JobdashboardBackendStack extends cdk.Stack {
       extjobApiIamRole: iamroles.apiAccessStepfnRole,
       resumesBucket: myBuckets.resumesBucket,
       resumesUploadLambda: myLambdas.uploadFileToS3,
+      getChatMessagesLambda: myLambdas.getChatMessages,
     });
   }
 }

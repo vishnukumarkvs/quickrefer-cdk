@@ -346,6 +346,7 @@ export class MyLambdas extends Construct {
         ACTIVE_CONNECTIONS: process.env
           .ACTIVE_CONNECTIONS_DDB_TABLE_NAME as string,
         CHAT_MESSAGES: process.env.CHAT_MESSAGES_DDB_TABLE_NAME as string,
+        CHAT_SUMMARY: process.env.CHAT_SUMMARY_DDB_TABLE_NAME as string,
       },
       timeout: Duration.seconds(10),
     };

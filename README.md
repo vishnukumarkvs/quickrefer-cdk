@@ -185,3 +185,24 @@ aws dynamodb query \
  --select "COUNT"
 
 unseencount of chatId receiverid
+
+---
+
+Retrieve the seen count of all chats for a specific user (partition key):
+
+aws dynamodb query \
+ --region YOUR_REGION \
+ --table-name QrChatSummaryTable \
+ --key-condition-expression "userId = :userIdValue" \
+ --expression-attribute-values '{":userIdValue": {"S": "YOUR_USER_ID"}}' \
+ --select "SUM" \
+ --projection-expression "seenCount"
+
+Retrieve the seen count for a specific chat of a user:
+
+aws dynamodb get-item \
+ --region YOUR_REGION \
+ --table-name QrChatSummaryTable \
+ --key '{"userId": {"S": "YOUR_USER_ID"}, "chatId": {"S": "YOUR_CHAT_ID"}}' \
+ --projection-expression "seenCount"
+Replace the placeholders as appropriate:

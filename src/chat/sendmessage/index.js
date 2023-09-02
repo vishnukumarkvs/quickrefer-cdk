@@ -1,5 +1,9 @@
 import ddbClient from "./ddbClient";
-import { PutItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
+import {
+  PutItemCommand,
+  QueryCommand,
+  UpdateItemCommand,
+} from "@aws-sdk/client-dynamodb";
 import {
   ApiGatewayManagementApiClient,
   PostToConnectionCommand,
@@ -36,6 +40,7 @@ exports.handler = async (event) => {
   };
 
   const receiverIsActive = await checkUserConnection(receiverId);
+  console.log("receiverIsActive", receiverIsActive);
 
   const messageParams = {
     TableName: process.env.CHAT_MESSAGES,
@@ -45,9 +50,28 @@ exports.handler = async (event) => {
       senderId: { S: senderId },
       receiverId: { S: receiverId },
       content: { S: content },
-      seen: { N: receiverIsActive ? "1" : "0" },
     },
   };
+  console.log("messageParams", messageParams);
+
+  if (!receiverIsActive) {
+    const updateParams = {
+      TableName: process.env.CHAT_SUMMARY, // Replace with your table name
+      Key: {
+        userId: { S: receiverId },
+        chatId: { S: chatId },
+      },
+      UpdateExpression:
+        "SET seenCount = if_not_exists(seenCount, :start) + :increment",
+      ExpressionAttributeValues: {
+        ":start": { N: "0" },
+        ":increment": { N: "1" },
+      },
+    };
+    console.log("updateParams", updateParams);
+    await ddbClient.send(new UpdateItemCommand(updateParams));
+    console.log("Updated chat summary");
+  }
 
   try {
     await ddbClient.send(new PutItemCommand(messageParams));

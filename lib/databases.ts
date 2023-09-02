@@ -14,12 +14,14 @@ export class MyDatabases extends Construct {
   public readonly authTable: ITable;
   public readonly qrActiveConnectionsTable: ITable;
   public readonly qrChatMessages: ITable;
+  public readonly qrChatSummary: ITable;
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
     this.authTable = this.createAuthTable();
     this.qrActiveConnectionsTable = this.createActiveConnectionsTable();
     this.qrChatMessages = this.createChatMessagesTable();
+    this.qrChatSummary = this.createChatSummaryTable();
   }
 
   private createAuthTable(): ITable {
@@ -88,17 +90,23 @@ export class MyDatabases extends Construct {
       billingMode: BillingMode.PAY_PER_REQUEST, // Use provisioned if you want provisioned throughput
       removalPolicy: RemovalPolicy.DESTROY,
     });
-    chatMessagesTable.addGlobalSecondaryIndex({
-      indexName: "RecipientIndex",
+    return chatMessagesTable;
+  }
+
+  private createChatSummaryTable(): ITable {
+    const chatSummaryTable = new Table(this, "QrChatSummaryTable", {
+      tableName: process.env.CHAT_SUMMARY_DDB_TABLE_NAME,
       partitionKey: {
-        name: "receiverId",
+        name: "userId",
         type: AttributeType.STRING,
       },
       sortKey: {
-        name: "seen",
-        type: AttributeType.NUMBER,
+        name: "chatId",
+        type: AttributeType.STRING,
       },
+      billingMode: BillingMode.PAY_PER_REQUEST,
+      removalPolicy: RemovalPolicy.DESTROY,
     });
-    return chatMessagesTable;
+    return chatSummaryTable;
   }
 }

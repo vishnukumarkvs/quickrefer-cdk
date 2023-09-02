@@ -16,7 +16,7 @@ exports.handler = async (event) => {
 
   try {
     const params = {
-      TableName: "QrChatMessages1",
+      TableName: process.env.CHAT_MESSAGES,
       KeyConditionExpression: "chatId = :chatIdValue",
       ExpressionAttributeValues: {
         ":chatIdValue": { S: chatId },

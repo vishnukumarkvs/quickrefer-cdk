@@ -173,3 +173,15 @@ WITH userId
 RETURN collect(userId) AS referredUserIds
 
 https://awstip.com/how-to-run-puppeteer-on-aws-lambda-using-layers-b1583ebd7120
+
+ddb queries
+
+unseen count total receiverid
+aws dynamodb query \
+ --table-name QrChatMessages3 \
+ --index-name RecipientIndex \
+ --key-condition-expression "receiverId = :receiverIdValue AND seen = :seenValue" \
+ --expression-attribute-values '{":receiverIdValue": {"S": "daa8db90-2084-4617-a988-78ab259b12b5"}, ":seenValue": {"N": "0"}}' \
+ --select "COUNT"
+
+unseencount of chatId receiverid

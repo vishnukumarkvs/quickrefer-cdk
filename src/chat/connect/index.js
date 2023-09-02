@@ -9,7 +9,7 @@ exports.handler = async (event) => {
   console.log(connectionId, userId, chatId);
 
   const params = {
-    TableName: "QrActiveConnections1",
+    TableName: process.env.ACTIVE_CONNECTIONS,
     Item: {
       userId: { S: userId },
       connectionKey: { S: `CONNECTION#${connectionId}` },

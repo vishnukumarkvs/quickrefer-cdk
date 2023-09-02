@@ -283,6 +283,11 @@ export class MyLambdas extends Construct {
         externalModules: ["aws-sdk"],
       },
       runtime: Runtime.NODEJS_18_X,
+      environment: {
+        ACTIVE_CONNECTIONS: process.env
+          .ACTIVE_CONNECTIONS_DDB_TABLE_NAME as string,
+        CHAT_MESSAGES: process.env.CHAT_MESSAGES_DDB_TABLE_NAME as string,
+      },
       timeout: Duration.seconds(10),
     };
 
@@ -305,6 +310,11 @@ export class MyLambdas extends Construct {
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
         externalModules: ["aws-sdk"],
+      },
+      environment: {
+        ACTIVE_CONNECTIONS: process.env
+          .ACTIVE_CONNECTIONS_DDB_TABLE_NAME as string,
+        CHAT_MESSAGES: process.env.CHAT_MESSAGES_DDB_TABLE_NAME as string,
       },
       runtime: Runtime.NODEJS_18_X,
       timeout: Duration.seconds(10),
@@ -332,6 +342,11 @@ export class MyLambdas extends Construct {
         externalModules: ["aws-sdk"],
       },
       runtime: Runtime.NODEJS_18_X,
+      environment: {
+        ACTIVE_CONNECTIONS: process.env
+          .ACTIVE_CONNECTIONS_DDB_TABLE_NAME as string,
+        CHAT_MESSAGES: process.env.CHAT_MESSAGES_DDB_TABLE_NAME as string,
+      },
       timeout: Duration.seconds(10),
     };
 
@@ -354,6 +369,11 @@ export class MyLambdas extends Construct {
         externalModules: ["aws-sdk"],
       },
       runtime: Runtime.NODEJS_18_X,
+      environment: {
+        ACTIVE_CONNECTIONS: process.env
+          .ACTIVE_CONNECTIONS_DDB_TABLE_NAME as string,
+        CHAT_MESSAGES: process.env.CHAT_MESSAGES_DDB_TABLE_NAME as string,
+      },
       timeout: Duration.seconds(10),
     };
 

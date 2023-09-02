@@ -6,6 +6,9 @@ import {
   Table,
 } from "aws-cdk-lib/aws-dynamodb";
 import { Construct } from "constructs";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 export class MyDatabases extends Construct {
   public readonly authTable: ITable;
@@ -47,7 +50,7 @@ export class MyDatabases extends Construct {
 
   private createActiveConnectionsTable(): ITable {
     const activeConnectionsTable = new Table(this, "QrActiveConnectionsTable", {
-      tableName: "QrActiveConnections1",
+      tableName: process.env.ACTIVE_CONNECTIONS_DDB_TABLE_NAME,
       partitionKey: {
         name: "userId",
         type: AttributeType.STRING,
@@ -73,7 +76,7 @@ export class MyDatabases extends Construct {
 
   private createChatMessagesTable(): ITable {
     const chatMessagesTable = new Table(this, "QrChatMessagesTable", {
-      tableName: "QrChatMessages1",
+      tableName: process.env.CHAT_MESSAGES_DDB_TABLE_NAME,
       partitionKey: {
         name: "chatId",
         type: AttributeType.STRING,
@@ -88,11 +91,11 @@ export class MyDatabases extends Construct {
     chatMessagesTable.addGlobalSecondaryIndex({
       indexName: "RecipientIndex",
       partitionKey: {
-        name: "recipientId",
+        name: "receiverId",
         type: AttributeType.STRING,
       },
       sortKey: {
-        name: "timestamp",
+        name: "seen",
         type: AttributeType.NUMBER,
       },
     });

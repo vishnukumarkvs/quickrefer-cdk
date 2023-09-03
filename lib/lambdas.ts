@@ -17,6 +17,7 @@ dotenv.config();
 interface MyLambdaProps {
   qrActiveConnectionsTable: ITable;
   qrChatMessages: ITable;
+  qrChatSummary: ITable;
 }
 
 export class MyLambdas extends Construct {
@@ -34,6 +35,9 @@ export class MyLambdas extends Construct {
   public readonly chatDisconnect: NodejsFunction;
   public readonly chatMessage: NodejsFunction;
   public readonly getChatMessages: NodejsFunction;
+  public readonly getAllUnseenCount: NodejsFunction;
+  public readonly getUnseenCountOfChat: NodejsFunction;
+  public readonly updateUnseenStatus: NodejsFunction;
 
   constructor(scope: Construct, id: string, props: MyLambdaProps) {
     super(scope, id);
@@ -61,6 +65,13 @@ export class MyLambdas extends Construct {
       props.qrChatMessages
     );
     this.getChatMessages = this.getChatMessagesLambda(props.qrChatMessages);
+    this.getAllUnseenCount = this.getAllUnseenCountLambda(props.qrChatSummary);
+    this.getUnseenCountOfChat = this.getUnseenCountOfChatLambda(
+      props.qrChatSummary
+    );
+    this.updateUnseenStatus = this.createUpdateUnseenStatusLambda(
+      props.qrChatSummary
+    );
   }
 
   private createNeo4jLambdaForPostJob(): NodejsFunction {
@@ -396,5 +407,115 @@ export class MyLambdas extends Construct {
     qrChatMessages.grantReadWriteData(getChatMessagesLambda);
 
     return getChatMessagesLambda;
+  }
+
+  private getAllUnseenCountLambda(qrChatSummary: ITable): NodejsFunction {
+    const nodeJsFunctionProps: NodejsFunctionProps = {
+      bundling: {
+        externalModules: ["aws-sdk"],
+      },
+      runtime: Runtime.NODEJS_18_X,
+      environment: {
+        CHAT_SUMMARY: process.env.CHAT_SUMMARY_DDB_TABLE_NAME as string,
+      },
+      timeout: Duration.seconds(10),
+    };
+
+    const getAllUnseenCountLambda = new NodejsFunction(
+      this,
+      "getAllUnseenCount",
+      {
+        entry: join(
+          __dirname,
+          "..",
+          "src",
+          "chat",
+          "getallunseencount",
+          "index.js"
+        ),
+        ...nodeJsFunctionProps,
+      }
+    );
+
+    Tags.of(getAllUnseenCountLambda).add("Project", "QR");
+    Tags.of(getAllUnseenCountLambda).add("Function", "getAllUnseenCount");
+
+    qrChatSummary.grantReadData(getAllUnseenCountLambda);
+
+    return getAllUnseenCountLambda;
+  }
+
+  private getUnseenCountOfChatLambda(qrChatSummary: ITable): NodejsFunction {
+    const nodeJsFunctionProps: NodejsFunctionProps = {
+      bundling: {
+        externalModules: ["aws-sdk"],
+      },
+      runtime: Runtime.NODEJS_18_X,
+      environment: {
+        CHAT_SUMMARY: process.env.CHAT_SUMMARY_DDB_TABLE_NAME as string,
+      },
+      timeout: Duration.seconds(10),
+    };
+
+    const getUnseenCountOfChatLambda = new NodejsFunction(
+      this,
+      "getUnseenCountOfChat",
+      {
+        entry: join(
+          __dirname,
+          "..",
+          "src",
+          "chat",
+          "getunseencountofchat",
+          "index.js"
+        ),
+        ...nodeJsFunctionProps,
+      }
+    );
+
+    Tags.of(getUnseenCountOfChatLambda).add("Project", "QR");
+    Tags.of(getUnseenCountOfChatLambda).add("Function", "getUnseenCountOfChat");
+
+    qrChatSummary.grantReadData(getUnseenCountOfChatLambda);
+
+    return getUnseenCountOfChatLambda;
+  }
+
+  private createUpdateUnseenStatusLambda(
+    qrChatSummary: ITable
+  ): NodejsFunction {
+    const nodeJsFunctionProps: NodejsFunctionProps = {
+      bundling: {
+        externalModules: ["aws-sdk"],
+      },
+      runtime: Runtime.NODEJS_18_X,
+      environment: {
+        CHAT_SUMMARY: process.env.CHAT_SUMMARY_DDB_TABLE_NAME as string,
+      },
+      timeout: Duration.seconds(10),
+    };
+
+    const updateUnseenStatusLambda = new NodejsFunction(
+      this,
+      "updateUnseenStatus",
+      {
+        entry: join(
+          __dirname,
+          "..",
+          "src",
+          "chat",
+          "updateunseenstatus",
+          "index.js"
+        ),
+        ...nodeJsFunctionProps,
+      }
+    );
+
+    Tags.of(updateUnseenStatusLambda).add("Project", "QR");
+    Tags.of(updateUnseenStatusLambda).add("Function", "updateUnseenStatus");
+
+    qrChatSummary.grantReadWriteData(updateUnseenStatusLambda);
+
+    return updateUnseenStatusLambda;
   }
 }

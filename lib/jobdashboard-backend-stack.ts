@@ -41,6 +41,9 @@ export class JobdashboardBackendStack extends cdk.Stack {
       resumesBucket: myBuckets.resumesBucket,
       resumesUploadLambda: myLambdas.uploadFileToS3,
       getChatMessagesLambda: myLambdas.getChatMessages,
+      getUnseenCountOfChatLambda: myLambdas.getUnseenCountOfChat,
+      getAllUnseenCountLambda: myLambdas.getAllUnseenCount,
+      updateUnseenStatusLambda: myLambdas.updateUnseenStatus,
     });
   }
 }

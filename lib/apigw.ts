@@ -19,6 +19,9 @@ interface ApiGatewayProps {
   resumesBucket: IBucket;
   resumesUploadLambda: IFunction;
   getChatMessagesLambda: IFunction;
+  getUnseenCountOfChatLambda: IFunction;
+  getAllUnseenCountLambda: IFunction;
+  updateUnseenStatusLambda: IFunction;
 }
 
 export class ApiGateways extends Construct {
@@ -131,11 +134,42 @@ export class ApiGateways extends Construct {
       props.getChatMessagesLambda
     );
 
+    const getAllUnseenCountIntegration = new LambdaIntegration(
+      props.getAllUnseenCountLambda
+    );
+
+    const getUnseenCountOfChatIntegration = new LambdaIntegration(
+      props.getUnseenCountOfChatLambda
+    );
+
+    const updateUnseenStatusIntegration = new LambdaIntegration(
+      props.updateUnseenStatusLambda
+    );
+
     const chatMessagesResource = chatMessagesApi.root.addResource("messages");
     chatMessagesResource.addMethod("GET", chatMessagesIntegration);
     chatMessagesResource.addCorsPreflight({
       allowOrigins: ["*"], // You might want to restrict this in production
       allowMethods: ["GET", "OPTIONS"],
+      allowHeaders: ["Content-Type"],
+    });
+
+    const chatStatusResource = chatMessagesApi.root.addResource("status");
+    chatStatusResource
+      .addResource("getAllUnseen")
+      .addMethod("GET", getAllUnseenCountIntegration);
+
+    chatStatusResource
+      .addResource("getUnseenCountOfChat")
+      .addMethod("GET", getUnseenCountOfChatIntegration);
+
+    chatStatusResource
+      .addResource("updateUnseenStatus")
+      .addMethod("POST", updateUnseenStatusIntegration);
+
+    chatStatusResource.addCorsPreflight({
+      allowOrigins: ["*"], // You might want to restrict this in production
+      allowMethods: ["GET", "POST", "OPTIONS"],
       allowHeaders: ["Content-Type"],
     });
 

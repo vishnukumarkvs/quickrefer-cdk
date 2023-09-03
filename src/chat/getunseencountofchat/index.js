@@ -1,11 +1,11 @@
 import ddbClient from "./ddbClient";
-import { QueryCommand } from "@aws-sdk/client-dynamodb";
+import { GetItemCommand } from "@aws-sdk/client-dynamodb";
 
 exports.handler = async (event) => {
   const chatId = event.queryStringParameters.chatId;
-  console.log("event object:", JSON.stringify(event, undefined, 2));
-  console.log("chatId:", chatId);
-  if (!chatId) {
+  const userId = event.queryStringParameters.userId;
+
+  if (!userId && !chatId) {
     return {
       statusCode: 400,
       headers: {
@@ -13,22 +13,23 @@ exports.handler = async (event) => {
         "Access-Control-Allow-Headers": "Content-Type",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ message: "chatId is required" }),
+      body: JSON.stringify({ message: "userId and chatId is required" }),
     };
   }
 
-  // use aws cli before testing it
-
   try {
     const params = {
-      TableName: process.env.CHAT_MESSAGES,
-      KeyConditionExpression: "chatId = :chatIdValue",
-      ExpressionAttributeValues: {
-        ":chatIdValue": { S: chatId },
+      TableName: process.env.CHAT_SUMMARY,
+      Key: {
+        userId: { S: userId },
+        chatId: { S: chatId },
       },
+      ProjectionExpression: "seenCount",
     };
-    const data = await ddbClient.send(new QueryCommand(params));
-    console.log("Queried data", data.Items);
+    const getResult = await ddbClient.send(new GetItemCommand(params));
+    console.log("GET data", getResult);
+    const seenCount = getResult.Item?.seenCount?.N || 0;
+
     return {
       statusCode: 200,
       headers: {
@@ -36,10 +37,10 @@ exports.handler = async (event) => {
         "Access-Control-Allow-Headers": "Content-Type",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(data.Items),
+      body: JSON.stringify({ seenCount }),
     };
   } catch (error) {
-    console.error("Unable to query. Error:", JSON.stringify(error, null, 2));
+    console.error("Error:", JSON.stringify(error, null, 2));
     return {
       statusCode: 500,
       headers: {
@@ -47,7 +48,9 @@ exports.handler = async (event) => {
         "Access-Control-Allow-Headers": "Content-Type",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ message: "Internal Server Error" }),
+      body: JSON.stringify({
+        message: "Internal server error",
+      }),
     };
   }
 };

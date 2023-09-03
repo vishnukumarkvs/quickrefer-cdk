@@ -1,29 +1,40 @@
 import ddbClient from "./ddbClient";
-import { QueryCommand } from "@aws-sdk/client-dynamodb";
+import { UpdateItemCommand } from "@aws-sdk/client-dynamodb";
 
 exports.handler = async (event) => {
   const body = JSON.parse(event.body);
 
   const { receiverId, chatId } = body;
+
+  console.log("receiverId", receiverId);
+  console.log("chatId", chatId);
+
   if (!chatId && !receiverId) {
     return {
       statusCode: 400,
+      headers: {
+        "Access-Control-Allow-Origin": "*", // You might want to restrict this in production
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ message: "chatId and receiverId is required" }),
     };
   }
 
-  // use aws cli before testing it
-
   try {
-    const params = {
-      TableName: process.env.CHAT_MESSAGES,
-      KeyConditionExpression: "chatId = :chatIdValue",
+    const resetParams = {
+      TableName: process.env.CHAT_SUMMARY,
+      Key: {
+        userId: { S: receiverId },
+        chatId: { S: chatId },
+      },
+      UpdateExpression: "SET seenCount = :zero",
       ExpressionAttributeValues: {
-        ":chatIdValue": { S: chatId },
+        ":zero": { N: "0" },
       },
     };
-    const data = await ddbClient.send(new QueryCommand(params));
-    console.log("Queried data", data.Items);
+    await ddbClient.send(new UpdateItemCommand(resetParams));
+    console.log("Reset to zero done");
     return {
       statusCode: 200,
       headers: {
@@ -31,18 +42,23 @@ exports.handler = async (event) => {
         "Access-Control-Allow-Headers": "Content-Type",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(data.Items),
+      body: JSON.stringify({ message: "Reset to zero done" }),
     };
   } catch (error) {
-    console.error("Unable to query. Error:", JSON.stringify(error, null, 2));
+    console.error(
+      "Reset unseen to zero unsuccessful. Error:",
+      JSON.stringify(error, null, 2)
+    );
     return {
-      statusCode: 500,
+      statusCode: 200,
       headers: {
         "Access-Control-Allow-Origin": "*", // You might want to restrict this in production
         "Access-Control-Allow-Headers": "Content-Type",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ message: "Internal Server Error" }),
+      body: JSON.stringify({
+        message: "Reset unseen to zero unsuccessful. Error",
+      }),
     };
   }
 };

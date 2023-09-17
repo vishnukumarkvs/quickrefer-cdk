@@ -26,7 +26,7 @@ export class MyDatabases extends Construct {
 
   private createAuthTable(): ITable {
     const authTable = new Table(this, "JtUsersTable", {
-      tableName: "Users",
+      tableName: process.env.DDB_USERS_TABLE,
       partitionKey: { name: "pk", type: AttributeType.STRING },
       sortKey: { name: "sk", type: AttributeType.STRING },
       timeToLiveAttribute: "expires",
@@ -52,7 +52,7 @@ export class MyDatabases extends Construct {
 
   private createActiveConnectionsTable(): ITable {
     const activeConnectionsTable = new Table(this, "QrActiveConnectionsTable", {
-      tableName: process.env.ACTIVE_CONNECTIONS_DDB_TABLE_NAME,
+      tableName: process.env.DDB_ACTIVE_CONNECTIONS_TABLE,
       partitionKey: {
         name: "userId",
         type: AttributeType.STRING,
@@ -78,7 +78,7 @@ export class MyDatabases extends Construct {
 
   private createChatMessagesTable(): ITable {
     const chatMessagesTable = new Table(this, "QrChatMessagesTable", {
-      tableName: process.env.CHAT_MESSAGES_DDB_TABLE_NAME,
+      tableName: process.env.DDB_CHAT_MESSAGES_TABLE,
       partitionKey: {
         name: "chatId",
         type: AttributeType.STRING,
@@ -95,7 +95,7 @@ export class MyDatabases extends Construct {
 
   private createChatSummaryTable(): ITable {
     const chatSummaryTable = new Table(this, "QrChatSummaryTable", {
-      tableName: process.env.CHAT_SUMMARY_DDB_TABLE_NAME,
+      tableName: process.env.DDB_CHAT_SUMMARY_TABLE,
       partitionKey: {
         name: "userId",
         type: AttributeType.STRING,

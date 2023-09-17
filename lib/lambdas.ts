@@ -34,6 +34,8 @@ export class MyLambdas extends Construct {
   public readonly chatConnect: NodejsFunction;
   public readonly chatDisconnect: NodejsFunction;
   public readonly chatMessage: NodejsFunction;
+
+  // chat status lambdas
   public readonly getChatMessages: NodejsFunction;
   public readonly getAllUnseenCount: NodejsFunction;
   public readonly getUnseenCountOfChat: NodejsFunction;
@@ -295,9 +297,8 @@ export class MyLambdas extends Construct {
       },
       runtime: Runtime.NODEJS_18_X,
       environment: {
-        ACTIVE_CONNECTIONS: process.env
-          .ACTIVE_CONNECTIONS_DDB_TABLE_NAME as string,
-        CHAT_MESSAGES: process.env.CHAT_MESSAGES_DDB_TABLE_NAME as string,
+        ACTIVE_CONNECTIONS: process.env.DDB_ACTIVE_CONNECTIONS_TABLE as string,
+        CHAT_MESSAGES: process.env.DDB_CHAT_MESSAGES_TABLE as string,
       },
       timeout: Duration.seconds(10),
     };
@@ -323,9 +324,8 @@ export class MyLambdas extends Construct {
         externalModules: ["aws-sdk"],
       },
       environment: {
-        ACTIVE_CONNECTIONS: process.env
-          .ACTIVE_CONNECTIONS_DDB_TABLE_NAME as string,
-        CHAT_MESSAGES: process.env.CHAT_MESSAGES_DDB_TABLE_NAME as string,
+        ACTIVE_CONNECTIONS: process.env.DDB_ACTIVE_CONNECTIONS_TABLE as string,
+        CHAT_MESSAGES: process.env.DDB_CHAT_MESSAGES_TABLE as string,
       },
       runtime: Runtime.NODEJS_18_X,
       timeout: Duration.seconds(10),
@@ -354,10 +354,11 @@ export class MyLambdas extends Construct {
       },
       runtime: Runtime.NODEJS_18_X,
       environment: {
-        ACTIVE_CONNECTIONS: process.env
-          .ACTIVE_CONNECTIONS_DDB_TABLE_NAME as string,
-        CHAT_MESSAGES: process.env.CHAT_MESSAGES_DDB_TABLE_NAME as string,
-        CHAT_SUMMARY: process.env.CHAT_SUMMARY_DDB_TABLE_NAME as string,
+        ACTIVE_CONNECTIONS: process.env.DDB_ACTIVE_CONNECTIONS_TABLE as string,
+        CHAT_MESSAGES: process.env.DDB_CHAT_MESSAGES_TABLE as string,
+        CHAT_SUMMARY: process.env.DDB_CHAT_SUMMARY_TABLE as string,
+        CHAT_WEBSPOCKET_APIGATEWAY_ENDPOINT: process.env
+          .CHAT_WEBSPOCKET_APIGATEWAY_ENDPOINT as string,
       },
       timeout: Duration.seconds(10),
     };
@@ -382,9 +383,8 @@ export class MyLambdas extends Construct {
       },
       runtime: Runtime.NODEJS_18_X,
       environment: {
-        ACTIVE_CONNECTIONS: process.env
-          .ACTIVE_CONNECTIONS_DDB_TABLE_NAME as string,
-        CHAT_MESSAGES: process.env.CHAT_MESSAGES_DDB_TABLE_NAME as string,
+        ACTIVE_CONNECTIONS: process.env.DDB_ACTIVE_CONNECTIONS_TABLE as string,
+        CHAT_MESSAGES: process.env.DDB_CHAT_MESSAGES_TABLE as string,
       },
       timeout: Duration.seconds(10),
     };
@@ -416,7 +416,7 @@ export class MyLambdas extends Construct {
       },
       runtime: Runtime.NODEJS_18_X,
       environment: {
-        CHAT_SUMMARY: process.env.CHAT_SUMMARY_DDB_TABLE_NAME as string,
+        CHAT_SUMMARY: process.env.DDB_CHAT_SUMMARY_TABLE as string,
       },
       timeout: Duration.seconds(10),
     };
@@ -452,7 +452,7 @@ export class MyLambdas extends Construct {
       },
       runtime: Runtime.NODEJS_18_X,
       environment: {
-        CHAT_SUMMARY: process.env.CHAT_SUMMARY_DDB_TABLE_NAME as string,
+        CHAT_SUMMARY: process.env.DDB_CHAT_SUMMARY_TABLE as string,
       },
       timeout: Duration.seconds(10),
     };
@@ -490,7 +490,7 @@ export class MyLambdas extends Construct {
       },
       runtime: Runtime.NODEJS_18_X,
       environment: {
-        CHAT_SUMMARY: process.env.CHAT_SUMMARY_DDB_TABLE_NAME as string,
+        CHAT_SUMMARY: process.env.DDB_CHAT_SUMMARY_TABLE as string,
       },
       timeout: Duration.seconds(10),
     };

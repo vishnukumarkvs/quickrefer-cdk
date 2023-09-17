@@ -28,13 +28,12 @@ export class ApiGateways extends Construct {
   constructor(scope: Construct, id: string, props: ApiGatewayProps) {
     super(scope, id);
 
-    // Create the API Gateway
+    // Neo4j APIs
     const apiGateway = new RestApi(this, "Neo4jApiGw", {
-      restApiName: "Neo4j API",
+      restApiName: "Neo4j APIs",
       deploy: false,
     });
 
-    // Create Lambda Integration for Post Job Lambda
     const postJobIntegration = new LambdaIntegration(
       props.createNeo4jLambdaForPostJob
     );
@@ -47,8 +46,7 @@ export class ApiGateways extends Construct {
       props.createNeo4jLambdaForReferralSubmit
     );
 
-    // Create resource for Post Job Lambda
-    const postJobResource = apiGateway.root.addResource("postjob");
+    const postJobResource = apiGateway.root.addResource("post-job");
     postJobResource.addMethod("POST", postJobIntegration);
     postJobResource.addCorsPreflight({
       allowOrigins: ["*"], // You might want to restrict this in production
@@ -56,28 +54,28 @@ export class ApiGateways extends Construct {
       allowHeaders: ["Content-Type"],
     });
 
-    // Create resource for Search By Parameter Lambda
-    const searchByParameterResource =
-      apiGateway.root.addResource("searchByParameter");
+    const searchByParameterResource = apiGateway.root.addResource(
+      "search-by-parameter"
+    );
     searchByParameterResource.addMethod("GET", searchByParameterIntegration);
     searchByParameterResource.addCorsPreflight({
-      allowOrigins: ["*"], // You might want to restrict this in production
+      allowOrigins: ["*"],
       allowMethods: ["GET", "OPTIONS"],
       allowHeaders: ["Content-Type"],
     });
 
-    // Create resource for Referral Submit
     const referralSubmitResource =
-      apiGateway.root.addResource("referralSubmit");
-    referralSubmitResource.addMethod("GET", referralSubmitIntegration);
+      apiGateway.root.addResource("referral-submit");
+    // referralSubmitResource.addMethod("GET", referralSubmitIntegration);
     referralSubmitResource.addMethod("POST", referralSubmitIntegration);
     referralSubmitResource.addCorsPreflight({
-      allowOrigins: ["*"], // You might want to restrict this in production
+      allowOrigins: ["*"],
       allowMethods: ["GET", "POST", "OPTIONS"],
       allowHeaders: ["Content-Type"],
     });
 
-    const extjobpostapi = new RestApi(this, "extjobpost", {
+    // External Job Post API
+    const extjobpostapi = new RestApi(this, "ExtJobPost", {
       restApiName: "External JobPost API",
       deploy: false,
     });
@@ -105,7 +103,8 @@ export class ApiGateways extends Construct {
       }
     );
 
-    const resumeUploadApi = new RestApi(this, "resumeUpload", {
+    // Resume Upload API
+    const resumeUploadApi = new RestApi(this, "ResumeUpload", {
       restApiName: "Resume Upload API",
       deploy: false,
     });
@@ -125,7 +124,7 @@ export class ApiGateways extends Construct {
     });
 
     // get chat messages from chatId
-    const chatMessagesApi = new RestApi(this, "chatMessages", {
+    const chatMessagesApi = new RestApi(this, "ChatMessages", {
       restApiName: "Chat Messages API",
       deploy: false,
     });
@@ -156,20 +155,32 @@ export class ApiGateways extends Construct {
 
     const chatStatusResource = chatMessagesApi.root.addResource("status");
     chatStatusResource
-      .addResource("getAllUnseen")
+      .addResource("get-all-unseen")
       .addMethod("GET", getAllUnseenCountIntegration);
 
     chatStatusResource
-      .addResource("getUnseenCountOfChat")
+      .addResource("get-unseen-count-of-chat")
       .addMethod("GET", getUnseenCountOfChatIntegration);
 
-    chatStatusResource
-      .addResource("updateUnseenStatus")
-      .addMethod("POST", updateUnseenStatusIntegration);
+    // chatStatusResource
+    //   .addResource("updateUnseenStatus")
+    //   .addMethod("POST", updateUnseenStatusIntegration);
 
-    chatStatusResource.addCorsPreflight({
+    // chatStatusResource.addCorsPreflight({
+    //   allowOrigins: ["*"], // You might want to restrict this in production
+    //   allowMethods: ["GET", "POST", "OPTIONS"],
+    //   allowHeaders: ["Content-Type"],
+    // });
+
+    const updateUnseenStatusResource = chatStatusResource.addResource(
+      "update-unseen-status"
+    );
+    updateUnseenStatusResource.addMethod("POST", updateUnseenStatusIntegration);
+
+    // Configure CORS for the resource
+    updateUnseenStatusResource.addCorsPreflight({
       allowOrigins: ["*"], // You might want to restrict this in production
-      allowMethods: ["GET", "POST", "OPTIONS"],
+      allowMethods: ["POST", "OPTIONS"],
       allowHeaders: ["Content-Type"],
     });
 
@@ -188,12 +199,12 @@ export class ApiGateways extends Construct {
     // Deploy External JobPost Api
     const extjobpostdeployment = new Deployment(
       this,
-      `extjobpostDeployment${Date.now()}`,
+      `ExtjobpostDeployment${Date.now()}`,
       {
         api: extjobpostapi,
       }
     );
-    const extjobpoststage = new Stage(this, "extjobpostStage", {
+    const extjobpoststage = new Stage(this, "ExtjobpostStage", {
       deployment: extjobpostdeployment,
       stageName: "dev",
     });
@@ -202,12 +213,12 @@ export class ApiGateways extends Construct {
     // Deploy Resume Upload Api
     const resumeUploadDeployment = new Deployment(
       this,
-      `resumeUploadDeployment${Date.now()}`,
+      `ResumeUploadDeployment${Date.now()}`,
       {
         api: resumeUploadApi,
       }
     );
-    const resumeUploadStage = new Stage(this, "resumeUploadStage", {
+    const resumeUploadStage = new Stage(this, "ResumeUploadStage", {
       deployment: resumeUploadDeployment,
       stageName: "dev",
     });
@@ -216,12 +227,12 @@ export class ApiGateways extends Construct {
     // Deploy Chat Messages Api
     const chatMessagesDeployment = new Deployment(
       this,
-      `chatMessagesDeployment${Date.now()}`,
+      `ChatMessagesDeployment${Date.now()}`,
       {
         api: chatMessagesApi,
       }
     );
-    const chatMessagesStage = new Stage(this, "chatMessagesStage", {
+    const chatMessagesStage = new Stage(this, "ChatMessagesStage", {
       deployment: chatMessagesDeployment,
       stageName: "dev",
     });

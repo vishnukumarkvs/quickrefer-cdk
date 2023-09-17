@@ -8,6 +8,7 @@ import * as dotenv from "dotenv";
 import { MyBuckets } from "./s3buckets";
 import { MyCloudfront } from "./cloudfront";
 import { MyCloudfrontS3 } from "./cloudfront_s3";
+import { WebsocketApiGateways } from "./websocketapi";
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 dotenv.config();
@@ -44,6 +45,12 @@ export class JobdashboardBackendStack extends cdk.Stack {
       getUnseenCountOfChatLambda: myLambdas.getUnseenCountOfChat,
       getAllUnseenCountLambda: myLambdas.getAllUnseenCount,
       updateUnseenStatusLambda: myLambdas.updateUnseenStatus,
+    });
+
+    const wsapis = new WebsocketApiGateways(this, "WebsocketApiGateways", {
+      connectHandler: myLambdas.chatConnect,
+      disconnectHandler: myLambdas.chatDisconnect,
+      sendMessageHandler: myLambdas.chatMessage,
     });
   }
 }

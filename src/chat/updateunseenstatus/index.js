@@ -13,7 +13,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 400,
       headers: {
-        "Access-Control-Allow-Origin": "*", // You might want to restrict this in production
+        "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Headers": "Content-Type",
         "Content-Type": "application/json",
       },
@@ -38,7 +38,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers: {
-        "Access-Control-Allow-Origin": "*", // You might want to restrict this in production
+        "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Headers": "Content-Type",
         "Content-Type": "application/json",
       },
@@ -52,7 +52,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers: {
-        "Access-Control-Allow-Origin": "*", // You might want to restrict this in production
+        "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Headers": "Content-Type",
         "Content-Type": "application/json",
       },

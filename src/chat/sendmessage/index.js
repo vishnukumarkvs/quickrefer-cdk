@@ -10,7 +10,7 @@ import {
 } from "@aws-sdk/client-apigatewaymanagementapi";
 
 const apiClient = new ApiGatewayManagementApiClient({
-  endpoint: "https://1hsde5qkbk.execute-api.us-east-1.amazonaws.com/prod",
+  endpoint: process.env.CHAT_WEBSPOCKET_APIGATEWAY_ENDPOINT,
 });
 
 exports.handler = async (event) => {
@@ -48,7 +48,7 @@ exports.handler = async (event) => {
       chatId: { S: chatId },
       timestamp: { N: currentUnixTimestamp.toString() },
       senderId: { S: senderId },
-      receiverId: { S: receiverId },
+      // receiverId: { S: receiverId },
       content: { S: content },
     },
   };

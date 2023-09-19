@@ -79,7 +79,8 @@ export class MyLambdas extends Construct {
   private createNeo4jLambdaForPostJob(): NodejsFunction {
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
-        externalModules: ["aws-sdk"],
+        externalModules: ["@aws-sdk/*"],
+        minify: true,
       },
       environment: {
         URI: process.env.NEO4J_URI as string,
@@ -104,7 +105,7 @@ export class MyLambdas extends Construct {
   private createNeo4jLambdaForSearchByParameter(): NodejsFunction {
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
-        externalModules: ["aws-sdk"],
+        externalModules: ["@aws-sdk/*"],
       },
       environment: {
         URI: process.env.NEO4J_URI as string,
@@ -138,7 +139,7 @@ export class MyLambdas extends Construct {
   private createNeo4jLambdaForReferralSubmit(): NodejsFunction {
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
-        externalModules: ["aws-sdk"],
+        externalModules: ["@aws-sdk/*"],
       },
       environment: {
         URI: process.env.NEO4J_URI as string,
@@ -180,7 +181,11 @@ export class MyLambdas extends Construct {
   private createWebpageTextExtractorLambda(): NodejsFunction {
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
-        externalModules: ["aws-sdk", "@sparticuz/chromium", "puppeteer-core"],
+        externalModules: [
+          "@aws-sdk/*",
+          "@sparticuz/chromium",
+          "puppeteer-core",
+        ],
       },
       runtime: Runtime.NODEJS_18_X,
       timeout: Duration.seconds(120),
@@ -233,7 +238,7 @@ export class MyLambdas extends Construct {
   private createPostOnlineJobLambda(): NodejsFunction {
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
-        externalModules: ["aws-sdk"],
+        externalModules: ["@aws-sdk/*"],
       },
       runtime: Runtime.NODEJS_18_X,
       timeout: Duration.seconds(10),
@@ -258,7 +263,7 @@ export class MyLambdas extends Construct {
   private createUploadResumeLambda(): NodejsFunction {
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
-        externalModules: ["aws-sdk"],
+        externalModules: ["@aws-sdk/*"],
       },
       environment: {
         BUCKET_NAME: process.env.BUCKET_NAME as string,
@@ -293,7 +298,7 @@ export class MyLambdas extends Construct {
   ): NodejsFunction {
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
-        externalModules: ["aws-sdk"],
+        externalModules: ["@aws-sdk/*"],
       },
       runtime: Runtime.NODEJS_18_X,
       environment: {
@@ -321,7 +326,7 @@ export class MyLambdas extends Construct {
   ): NodejsFunction {
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
-        externalModules: ["aws-sdk"],
+        externalModules: ["@aws-sdk/*"],
       },
       environment: {
         ACTIVE_CONNECTIONS: process.env.DDB_ACTIVE_CONNECTIONS_TABLE as string,
@@ -350,7 +355,7 @@ export class MyLambdas extends Construct {
   ): NodejsFunction {
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
-        externalModules: ["aws-sdk"],
+        externalModules: ["@aws-sdk/*"],
       },
       runtime: Runtime.NODEJS_18_X,
       environment: {
@@ -379,7 +384,7 @@ export class MyLambdas extends Construct {
   private getChatMessagesLambda(qrChatMessages: ITable): NodejsFunction {
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
-        externalModules: ["aws-sdk"],
+        externalModules: ["@aws-sdk/*"],
       },
       runtime: Runtime.NODEJS_18_X,
       environment: {
@@ -412,7 +417,7 @@ export class MyLambdas extends Construct {
   private getAllUnseenCountLambda(qrChatSummary: ITable): NodejsFunction {
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
-        externalModules: ["aws-sdk"],
+        externalModules: ["@aws-sdk/*"],
       },
       runtime: Runtime.NODEJS_18_X,
       environment: {
@@ -448,7 +453,7 @@ export class MyLambdas extends Construct {
   private getUnseenCountOfChatLambda(qrChatSummary: ITable): NodejsFunction {
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
-        externalModules: ["aws-sdk"],
+        externalModules: ["@aws-sdk/*"],
       },
       runtime: Runtime.NODEJS_18_X,
       environment: {
@@ -486,7 +491,7 @@ export class MyLambdas extends Construct {
   ): NodejsFunction {
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
-        externalModules: ["aws-sdk"],
+        externalModules: ["@aws-sdk/*"],
       },
       runtime: Runtime.NODEJS_18_X,
       environment: {

@@ -206,3 +206,5 @@ aws dynamodb get-item \
  --key '{"userId": {"S": "YOUR_USER_ID"}, "chatId": {"S": "YOUR_CHAT_ID"}}' \
  --projection-expression "seenCount"
 Replace the placeholders as appropriate:
+
+cdk diff QuickReferStaging -c env=staging

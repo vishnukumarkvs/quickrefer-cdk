@@ -44,6 +44,9 @@ export class MyLambdas extends Construct {
   constructor(scope: Construct, id: string, props: MyLambdaProps) {
     super(scope, id);
 
+    // const env = this.node.tryGetContext("env");
+    // console.log(this.node.tryGetContext(env).NEO4J_URI);
+
     this.neo4jLambdaForPostjob = this.createNeo4jLambdaForPostJob();
     this.neo4jLambdaForSearchByParameter =
       this.createNeo4jLambdaForSearchByParameter();
@@ -55,17 +58,29 @@ export class MyLambdas extends Construct {
     this.postOnlineJob = this.createPostOnlineJobLambda();
     this.uploadFileToS3 = this.createUploadResumeLambda();
 
+    // websocket api gateway policy
+    const webSocketApiGatewayPolicy = new iam.PolicyStatement({
+      actions: ["execute-api:ManageConnections"],
+      resources: ["*"],
+      effect: Effect.ALLOW,
+    });
+
     // Chat lambdas
     this.chatConnect = this.createChatConnectLambda(
-      props.qrActiveConnectionsTable
+      props.qrActiveConnectionsTable,
+      webSocketApiGatewayPolicy
     );
     this.chatDisconnect = this.createChatDisconnectLambda(
-      props.qrActiveConnectionsTable
+      props.qrActiveConnectionsTable,
+      webSocketApiGatewayPolicy
     );
     this.chatMessage = this.createChatMessageLambda(
       props.qrActiveConnectionsTable,
-      props.qrChatMessages
+      props.qrChatMessages,
+      webSocketApiGatewayPolicy
     );
+
+    // Chat status lambdas
     this.getChatMessages = this.getChatMessagesLambda(props.qrChatMessages);
     this.getAllUnseenCount = this.getAllUnseenCountLambda(props.qrChatSummary);
     this.getUnseenCountOfChat = this.getUnseenCountOfChatLambda(
@@ -76,16 +91,19 @@ export class MyLambdas extends Construct {
     );
   }
 
+  // Seperate functions
   private createNeo4jLambdaForPostJob(): NodejsFunction {
+    const env = this.node.tryGetContext("env");
+    // console.log(this.node.tryGetContext(env).NEO4J_URI);
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
         externalModules: ["@aws-sdk/*"],
         minify: true,
       },
       environment: {
-        URI: process.env.NEO4J_URI as string,
+        URI: this.node.tryGetContext(env).NEO4J_URI,
         USERNAME: process.env.NEO4J_USERNAME as string,
-        PASSWORD: process.env.NEO4J_PASSWORD as string,
+        PASSWORD: this.node.tryGetContext(env).NEO4J_PASSWORD,
       },
       runtime: Runtime.NODEJS_18_X,
       timeout: Duration.seconds(15),
@@ -103,14 +121,16 @@ export class MyLambdas extends Construct {
   }
 
   private createNeo4jLambdaForSearchByParameter(): NodejsFunction {
+    const env = this.node.tryGetContext("env");
+
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
         externalModules: ["@aws-sdk/*"],
       },
       environment: {
-        URI: process.env.NEO4J_URI as string,
+        URI: this.node.tryGetContext(env).NEO4J_URI,
         USERNAME: process.env.NEO4J_USERNAME as string,
-        PASSWORD: process.env.NEO4J_PASSWORD as string,
+        PASSWORD: this.node.tryGetContext(env).NEO4J_PASSWORD,
       },
       runtime: Runtime.NODEJS_18_X,
       timeout: Duration.seconds(15),
@@ -137,14 +157,16 @@ export class MyLambdas extends Construct {
   }
 
   private createNeo4jLambdaForReferralSubmit(): NodejsFunction {
+    const env = this.node.tryGetContext("env");
+
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
         externalModules: ["@aws-sdk/*"],
       },
       environment: {
-        URI: process.env.NEO4J_URI as string,
+        URI: this.node.tryGetContext(env).NEO4J_URI,
         USERNAME: process.env.NEO4J_USERNAME as string,
-        PASSWORD: process.env.NEO4J_PASSWORD as string,
+        PASSWORD: this.node.tryGetContext(env).NEO4J_PASSWORD,
       },
       runtime: Runtime.NODEJS_18_X,
       timeout: Duration.seconds(15),
@@ -179,6 +201,8 @@ export class MyLambdas extends Construct {
   }
 
   private createWebpageTextExtractorLambda(): NodejsFunction {
+    const env = this.node.tryGetContext("env");
+    const region = this.node.tryGetContext(env).REGION;
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
         externalModules: [
@@ -194,7 +218,7 @@ export class MyLambdas extends Construct {
         LayerVersion.fromLayerVersionArn(
           this,
           "puppeteerLayer",
-          "arn:aws:lambda:us-east-1:895656015678:layer:puppeteer3:1"
+          `arn:aws:lambda:${region}:895656015678:layer:puppeteer3:1`
         ),
       ],
     };
@@ -236,6 +260,8 @@ export class MyLambdas extends Construct {
   }
 
   private createPostOnlineJobLambda(): NodejsFunction {
+    const env = this.node.tryGetContext("env");
+
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
         externalModules: ["@aws-sdk/*"],
@@ -243,9 +269,9 @@ export class MyLambdas extends Construct {
       runtime: Runtime.NODEJS_18_X,
       timeout: Duration.seconds(10),
       environment: {
-        URI: process.env.NEO4J_URI as string,
+        URI: this.node.tryGetContext(env).NEO4J_URI,
         USERNAME: process.env.NEO4J_USERNAME as string,
-        PASSWORD: process.env.NEO4J_PASSWORD as string,
+        PASSWORD: this.node.tryGetContext(env).NEO4J_PASSWORD,
       },
     };
 
@@ -294,7 +320,8 @@ export class MyLambdas extends Construct {
 
   // Chat lambdas
   private createChatConnectLambda(
-    qrActiveConnectionsTable: ITable
+    qrActiveConnectionsTable: ITable,
+    webSocketApiGatewayPolicy: iam.PolicyStatement
   ): NodejsFunction {
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
@@ -317,12 +344,14 @@ export class MyLambdas extends Construct {
     Tags.of(chatConnectLambda).add("Function", "chatConnect");
 
     qrActiveConnectionsTable.grantReadWriteData(chatConnectLambda);
+    chatConnectLambda.addToRolePolicy(webSocketApiGatewayPolicy);
 
     return chatConnectLambda;
   }
 
   private createChatDisconnectLambda(
-    qrActiveConnectionsTable: ITable
+    qrActiveConnectionsTable: ITable,
+    webSocketApiGatewayPolicy: iam.PolicyStatement
   ): NodejsFunction {
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
@@ -345,14 +374,21 @@ export class MyLambdas extends Construct {
     Tags.of(chatDisconnectLambda).add("Function", "chatDisconnect");
 
     qrActiveConnectionsTable.grantReadWriteData(chatDisconnectLambda);
+    chatDisconnectLambda.addToRolePolicy(webSocketApiGatewayPolicy);
 
     return chatDisconnectLambda;
   }
 
   private createChatMessageLambda(
     qrActiveConnectionsTable: ITable,
-    qrChatMessages: ITable
+    qrChatMessages: ITable,
+    webSocketApiGatewayPolicy: iam.PolicyStatement
   ): NodejsFunction {
+    const env = this.node.tryGetContext("env");
+    const WS_API_ID = this.node.tryGetContext(env).WS_API_ID;
+    const region = this.node.tryGetContext(env).REGION;
+    var wsendpoint = `https://${WS_API_ID}.execute-api.${region}.amazonaws.com/dev`;
+
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
         externalModules: ["@aws-sdk/*"],
@@ -362,8 +398,7 @@ export class MyLambdas extends Construct {
         ACTIVE_CONNECTIONS: process.env.DDB_ACTIVE_CONNECTIONS_TABLE as string,
         CHAT_MESSAGES: process.env.DDB_CHAT_MESSAGES_TABLE as string,
         CHAT_SUMMARY: process.env.DDB_CHAT_SUMMARY_TABLE as string,
-        CHAT_WEBSPOCKET_APIGATEWAY_ENDPOINT: process.env
-          .CHAT_WEBSPOCKET_APIGATEWAY_ENDPOINT as string,
+        CHAT_WEBSPOCKET_APIGATEWAY_ENDPOINT: wsendpoint,
       },
       timeout: Duration.seconds(10),
     };
@@ -378,9 +413,11 @@ export class MyLambdas extends Construct {
 
     qrActiveConnectionsTable.grantReadWriteData(chatMessageLambda);
     qrChatMessages.grantReadWriteData(chatMessageLambda);
+    chatMessageLambda.addToRolePolicy(webSocketApiGatewayPolicy);
 
     return chatMessageLambda;
   }
+
   private getChatMessagesLambda(qrChatMessages: ITable): NodejsFunction {
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {

@@ -1,8 +1,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 
 const ddbClient = new DynamoDBClient({
-  region: "us-east-1",
-  //   credentials: {
+  region: process.env.REGION, //   credentials: {
   //     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   //     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   //   },

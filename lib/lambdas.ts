@@ -77,6 +77,7 @@ export class MyLambdas extends Construct {
     this.chatMessage = this.createChatMessageLambda(
       props.qrActiveConnectionsTable,
       props.qrChatMessages,
+      props.qrChatSummary,
       webSocketApiGatewayPolicy
     );
 
@@ -167,6 +168,7 @@ export class MyLambdas extends Construct {
         URI: this.node.tryGetContext(env).NEO4J_URI,
         USERNAME: process.env.NEO4J_USERNAME as string,
         PASSWORD: this.node.tryGetContext(env).NEO4J_PASSWORD,
+        REGION: this.node.tryGetContext(env).REGION,
       },
       runtime: Runtime.NODEJS_18_X,
       timeout: Duration.seconds(15),
@@ -287,12 +289,15 @@ export class MyLambdas extends Construct {
   }
 
   private createUploadResumeLambda(): NodejsFunction {
+    const env = this.node.tryGetContext("env");
+
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
         externalModules: ["@aws-sdk/*"],
       },
       environment: {
         BUCKET_NAME: process.env.BUCKET_NAME as string,
+        REGION: this.node.tryGetContext(env).REGION,
       },
       runtime: Runtime.NODEJS_18_X,
       timeout: Duration.seconds(10),
@@ -323,6 +328,7 @@ export class MyLambdas extends Construct {
     qrActiveConnectionsTable: ITable,
     webSocketApiGatewayPolicy: iam.PolicyStatement
   ): NodejsFunction {
+    const env = this.node.tryGetContext("env");
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
         externalModules: ["@aws-sdk/*"],
@@ -331,6 +337,7 @@ export class MyLambdas extends Construct {
       environment: {
         ACTIVE_CONNECTIONS: process.env.DDB_ACTIVE_CONNECTIONS_TABLE as string,
         CHAT_MESSAGES: process.env.DDB_CHAT_MESSAGES_TABLE as string,
+        REGION: this.node.tryGetContext(env).REGION,
       },
       timeout: Duration.seconds(10),
     };
@@ -353,6 +360,8 @@ export class MyLambdas extends Construct {
     qrActiveConnectionsTable: ITable,
     webSocketApiGatewayPolicy: iam.PolicyStatement
   ): NodejsFunction {
+    const env = this.node.tryGetContext("env");
+
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
         externalModules: ["@aws-sdk/*"],
@@ -360,6 +369,7 @@ export class MyLambdas extends Construct {
       environment: {
         ACTIVE_CONNECTIONS: process.env.DDB_ACTIVE_CONNECTIONS_TABLE as string,
         CHAT_MESSAGES: process.env.DDB_CHAT_MESSAGES_TABLE as string,
+        REGION: this.node.tryGetContext(env).REGION,
       },
       runtime: Runtime.NODEJS_18_X,
       timeout: Duration.seconds(10),
@@ -382,6 +392,7 @@ export class MyLambdas extends Construct {
   private createChatMessageLambda(
     qrActiveConnectionsTable: ITable,
     qrChatMessages: ITable,
+    qrChatSummary: ITable,
     webSocketApiGatewayPolicy: iam.PolicyStatement
   ): NodejsFunction {
     const env = this.node.tryGetContext("env");
@@ -399,6 +410,7 @@ export class MyLambdas extends Construct {
         CHAT_MESSAGES: process.env.DDB_CHAT_MESSAGES_TABLE as string,
         CHAT_SUMMARY: process.env.DDB_CHAT_SUMMARY_TABLE as string,
         CHAT_WEBSPOCKET_APIGATEWAY_ENDPOINT: wsendpoint,
+        REGION: region,
       },
       timeout: Duration.seconds(10),
     };
@@ -413,12 +425,15 @@ export class MyLambdas extends Construct {
 
     qrActiveConnectionsTable.grantReadWriteData(chatMessageLambda);
     qrChatMessages.grantReadWriteData(chatMessageLambda);
+    qrChatSummary.grantReadWriteData(chatMessageLambda);
     chatMessageLambda.addToRolePolicy(webSocketApiGatewayPolicy);
 
     return chatMessageLambda;
   }
 
   private getChatMessagesLambda(qrChatMessages: ITable): NodejsFunction {
+    const env = this.node.tryGetContext("env");
+
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
         externalModules: ["@aws-sdk/*"],
@@ -427,6 +442,7 @@ export class MyLambdas extends Construct {
       environment: {
         ACTIVE_CONNECTIONS: process.env.DDB_ACTIVE_CONNECTIONS_TABLE as string,
         CHAT_MESSAGES: process.env.DDB_CHAT_MESSAGES_TABLE as string,
+        REGION: this.node.tryGetContext(env).REGION,
       },
       timeout: Duration.seconds(10),
     };
@@ -452,6 +468,8 @@ export class MyLambdas extends Construct {
   }
 
   private getAllUnseenCountLambda(qrChatSummary: ITable): NodejsFunction {
+    const env = this.node.tryGetContext("env");
+
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
         externalModules: ["@aws-sdk/*"],
@@ -459,6 +477,7 @@ export class MyLambdas extends Construct {
       runtime: Runtime.NODEJS_18_X,
       environment: {
         CHAT_SUMMARY: process.env.DDB_CHAT_SUMMARY_TABLE as string,
+        REGION: this.node.tryGetContext(env).REGION,
       },
       timeout: Duration.seconds(10),
     };
@@ -488,6 +507,8 @@ export class MyLambdas extends Construct {
   }
 
   private getUnseenCountOfChatLambda(qrChatSummary: ITable): NodejsFunction {
+    const env = this.node.tryGetContext("env");
+
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
         externalModules: ["@aws-sdk/*"],
@@ -495,6 +516,7 @@ export class MyLambdas extends Construct {
       runtime: Runtime.NODEJS_18_X,
       environment: {
         CHAT_SUMMARY: process.env.DDB_CHAT_SUMMARY_TABLE as string,
+        REGION: this.node.tryGetContext(env).REGION,
       },
       timeout: Duration.seconds(10),
     };
@@ -526,6 +548,8 @@ export class MyLambdas extends Construct {
   private createUpdateUnseenStatusLambda(
     qrChatSummary: ITable
   ): NodejsFunction {
+    const env = this.node.tryGetContext("env");
+
     const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
         externalModules: ["@aws-sdk/*"],
@@ -533,6 +557,7 @@ export class MyLambdas extends Construct {
       runtime: Runtime.NODEJS_18_X,
       environment: {
         CHAT_SUMMARY: process.env.DDB_CHAT_SUMMARY_TABLE as string,
+        REGION: this.node.tryGetContext(env).REGION,
       },
       timeout: Duration.seconds(10),
     };

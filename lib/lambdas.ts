@@ -11,6 +11,7 @@ import { Duration, Tags } from "aws-cdk-lib";
 import { Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { PythonFunction } from "@aws-cdk/aws-lambda-python-alpha";
 import * as iam from "aws-cdk-lib/aws-iam";
+import { GoFunction } from "@aws-cdk/aws-lambda-go-alpha";
 
 dotenv.config();
 
@@ -41,6 +42,9 @@ export class MyLambdas extends Construct {
   public readonly getUnseenCountOfChat: NodejsFunction;
   public readonly updateUnseenStatus: NodejsFunction;
 
+  // utils
+  public readonly emailNotif: GoFunction;
+
   constructor(scope: Construct, id: string, props: MyLambdaProps) {
     super(scope, id);
 
@@ -57,6 +61,8 @@ export class MyLambdas extends Construct {
     this.openaiJobExtractor = this.createOpenaiJobExtractorLambda();
     this.postOnlineJob = this.createPostOnlineJobLambda();
     this.uploadFileToS3 = this.createUploadResumeLambda();
+
+    this.emailNotif = this.createEmailNotifLambda();
 
     // websocket api gateway policy
     const webSocketApiGatewayPolicy = new iam.PolicyStatement({
@@ -584,5 +590,23 @@ export class MyLambdas extends Construct {
     qrChatSummary.grantReadWriteData(updateUnseenStatusLambda);
 
     return updateUnseenStatusLambda;
+  }
+  private createEmailNotifLambda(): GoFunction {
+    const env = this.node.tryGetContext("env");
+
+    const aa = new GoFunction(this, "emailNotifLambda", {
+      entry: join(__dirname, "..", "src", "utils", "emailnotif"),
+      bundling: {
+        forcedDockerBundling: true,
+      },
+      environment: {
+        URI: this.node.tryGetContext(env).NEO4J_URI,
+        USER: process.env.NEO4J_USERNAME as string,
+        PASSWORD: this.node.tryGetContext(env).NEO4J_PASSWORD,
+      },
+    });
+    Tags.of(aa).add("Project", "QR");
+    Tags.of(aa).add("Function", "EmailNotifications");
+    return aa;
   }
 }

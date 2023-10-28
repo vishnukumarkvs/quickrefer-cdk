@@ -17,7 +17,16 @@ exports.handler = async (event) => {
   const currentUnixTimestamp = Math.floor(Date.now() / 1000);
   const body = JSON.parse(event.body);
 
-  const { senderId, receiverId, chatId, content } = body;
+  const { senderId, receiverId, chatId, content, receiverEmail } = body;
+
+  console.log(
+    "5 details",
+    senderId,
+    receiverId,
+    chatId,
+    content,
+    receiverEmail
+  );
 
   const getActiveConnectionParams = (userId) => ({
     TableName: process.env.ACTIVE_CONNECTIONS,
@@ -54,20 +63,24 @@ exports.handler = async (event) => {
   };
   console.log("messageParams", messageParams);
 
+  // update email if not exists
   if (!receiverIsActive) {
     const updateParams = {
-      TableName: process.env.CHAT_SUMMARY, // Replace with your table name
+      TableName: process.env.CHAT_SUMMARY,
       Key: {
         userId: { S: receiverId },
         chatId: { S: chatId },
       },
       UpdateExpression:
-        "SET seenCount = if_not_exists(seenCount, :start) + :increment",
+        "SET seenCount = if_not_exists(seenCount, :start) + :increment, " +
+        "email = if_not_exists(email, :email)",
       ExpressionAttributeValues: {
         ":start": { N: "0" },
         ":increment": { N: "1" },
+        ":email": { S: receiverEmail },
       },
     };
+
     console.log("updateParams", updateParams);
     await ddbClient.send(new UpdateItemCommand(updateParams));
     console.log("Updated chat summary");

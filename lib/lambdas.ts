@@ -605,7 +605,11 @@ export class MyLambdas extends Construct {
         PASSWORD: this.node.tryGetContext(env).NEO4J_PASSWORD,
         DDB_TABLE_NAME: process.env.DDB_CHAT_SUMMARY_TABLE as string,
         REGION: this.node.tryGetContext(env).REGION,
+        SMTP_HOST: this.node.tryGetContext(env).SMTP_HOST,
+        SMTP_USER: this.node.tryGetContext(env).SMTP_USER,
+        SMTP_PASS: this.node.tryGetContext(env).SMTP_PASS,
       },
+      timeout: Duration.minutes(3),
     });
     qrChatSummary.grantReadData(aa);
 

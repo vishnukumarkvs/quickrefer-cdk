@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/smtp"
 	"os"
+	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -110,6 +112,28 @@ func mergeData(neo4jData, dynamoData []UserData) map[string]UserData {
 	return mergedData
 }
 
+func sendEmail(to, fullname string, requestcount, seencount int) error {
+	smtpHost := os.Getenv("SMTP_HOST")
+	smtpPort := "587"
+	smtpUser := os.Getenv("SMTP_USER")
+	smtpPass := os.Getenv("SMTP_PASS")   
+
+	from := "kvs.vishnu23@gmail.com"
+	subject := "Referral notifications on QuickRefer"
+	emailBody := fmt.Sprintf("Hello %s,\n\nRequestCount: %d\nSeenCount: %d", fullname, requestcount, seencount)
+
+	msg := "From: " + from + "\n" +
+		"To: " + to + "\n" +
+		"Subject: " + subject + "\n\n" +
+		emailBody
+
+	err := smtp.SendMail(smtpHost+":"+smtpPort,
+		smtp.PlainAuth("", smtpUser, smtpPass, smtpHost),
+		from, []string{to}, []byte(msg))
+
+	return err
+}
+
 type Response struct {
 	Message string `json:"message"`
 }
@@ -141,10 +165,22 @@ func handler(ctx context.Context) (Response, error) {
 	// Merging data
 	mergedData := mergeData(neo4jData, dynamoData)
 
+	// Print length
+	fmt.Printf("Total number of users: %d\n", len(mergedData))
+
 	// Display merged data
 	for _, user := range mergedData {
 		fmt.Printf("Fullname: %s, Email: %s, RequestCount: %d, SeenCount: %d\n", user.Fullname, user.Email, user.RequestCount, user.SeenCount)
 	}
+
+	for _,user := range mergedData{
+		time.Sleep(1 * time.Second)
+		err := sendEmail(user.Email,user.Fullname,user.RequestCount, user.SeenCount)
+		if err!=nil{
+			fmt.Println("error", err)
+		}
+	}
+
 	return Response{Message: "successful"}, nil
 
 }

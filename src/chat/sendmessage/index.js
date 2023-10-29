@@ -76,7 +76,7 @@ exports.handler = async (event) => {
         "SET seenCount = if_not_exists(seenCount, :start) + :increment, " +
         "email = if_not_exists(email, :email), " +
         "fullname = if_not_exists(fullname, :fullname), " +
-        "seenStatus = if_not_exists(seenStatus, :seenStatus)",
+        "seenStatus = :seenStatus",
       ExpressionAttributeValues: {
         ":start": { N: "0" },
         ":increment": { N: "1" },

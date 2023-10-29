@@ -62,7 +62,7 @@ export class MyLambdas extends Construct {
     this.postOnlineJob = this.createPostOnlineJobLambda();
     this.uploadFileToS3 = this.createUploadResumeLambda();
 
-    this.emailNotif = this.createEmailNotifLambda();
+    this.emailNotif = this.createEmailNotifLambda(props.qrChatSummary);
 
     // websocket api gateway policy
     const webSocketApiGatewayPolicy = new iam.PolicyStatement({
@@ -591,7 +591,7 @@ export class MyLambdas extends Construct {
 
     return updateUnseenStatusLambda;
   }
-  private createEmailNotifLambda(): GoFunction {
+  private createEmailNotifLambda(qrChatSummary: ITable): GoFunction {
     const env = this.node.tryGetContext("env");
 
     const aa = new GoFunction(this, "emailNotifLambda", {
@@ -603,8 +603,12 @@ export class MyLambdas extends Construct {
         URI: this.node.tryGetContext(env).NEO4J_URI,
         USER: process.env.NEO4J_USERNAME as string,
         PASSWORD: this.node.tryGetContext(env).NEO4J_PASSWORD,
+        DDB_TABLE_NAME: process.env.DDB_CHAT_SUMMARY_TABLE as string,
+        REGION: this.node.tryGetContext(env).REGION,
       },
     });
+    qrChatSummary.grantReadData(aa);
+
     Tags.of(aa).add("Project", "QR");
     Tags.of(aa).add("Function", "EmailNotifications");
     return aa;

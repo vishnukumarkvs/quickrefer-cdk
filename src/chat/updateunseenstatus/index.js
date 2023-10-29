@@ -28,9 +28,10 @@ exports.handler = async (event) => {
         userId: { S: receiverId },
         chatId: { S: chatId },
       },
-      UpdateExpression: "SET seenCount = :zero",
+      UpdateExpression: "SET seenCount = :zero, seenStatus = :trueValue",
       ExpressionAttributeValues: {
         ":zero": { N: "0" },
+        ":trueValue": { N: "1" },
       },
     };
     await ddbClient.send(new UpdateItemCommand(resetParams));

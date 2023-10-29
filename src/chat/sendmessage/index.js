@@ -17,7 +17,8 @@ exports.handler = async (event) => {
   const currentUnixTimestamp = Math.floor(Date.now() / 1000);
   const body = JSON.parse(event.body);
 
-  const { senderId, receiverId, chatId, content, receiverEmail } = body;
+  const { senderId, receiverId, chatId, content, receiverEmail, receiverName } =
+    body;
 
   console.log(
     "5 details",
@@ -73,11 +74,15 @@ exports.handler = async (event) => {
       },
       UpdateExpression:
         "SET seenCount = if_not_exists(seenCount, :start) + :increment, " +
-        "email = if_not_exists(email, :email)",
+        "email = if_not_exists(email, :email), " +
+        "fullname = if_not_exists(fullname, :fullname), " +
+        "seenStatus = if_not_exists(seenStatus, :seenStatus)",
       ExpressionAttributeValues: {
         ":start": { N: "0" },
         ":increment": { N: "1" },
         ":email": { S: receiverEmail },
+        ":fullname": { S: receiverName },
+        ":seenStatus": { N: "0" },
       },
     };
 

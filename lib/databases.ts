@@ -3,6 +3,7 @@ import {
   AttributeType,
   BillingMode,
   ITable,
+  ProjectionType,
   Table,
 } from "aws-cdk-lib/aws-dynamodb";
 import { Construct } from "constructs";
@@ -106,6 +107,18 @@ export class MyDatabases extends Construct {
       },
       billingMode: BillingMode.PAY_PER_REQUEST,
       removalPolicy: RemovalPolicy.DESTROY,
+    });
+    chatSummaryTable.addGlobalSecondaryIndex({
+      indexName: "seenStatus-index",
+      partitionKey: {
+        name: "seenStatus",
+        type: AttributeType.NUMBER,
+      },
+      sortKey: {
+        name: "seenCount",
+        type: AttributeType.NUMBER,
+      },
+      projectionType: ProjectionType.ALL,
     });
     return chatSummaryTable;
   }
